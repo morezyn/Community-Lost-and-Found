@@ -93,6 +93,31 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
         </div>
       )}
 
+      {claim.proofImageUrl && (
+        <div className="space-y-1">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Proof photo
+          </p>
+          <a
+            href={claim.proofImageUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block overflow-hidden rounded-lg border bg-muted"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={claim.proofImageUrl}
+              alt="Proof photo submitted with this response"
+              className="max-h-64 w-full object-cover transition hover:opacity-95"
+              loading="lazy"
+            />
+          </a>
+          <p className="text-[11px] text-muted-foreground">
+            Shared privately with the report owner and moderators. Open to view full size.
+          </p>
+        </div>
+      )}
+
       {claim.status !== "pending" && claim.reviewNote && (
         <p className="rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
           Reviewer note: {claim.reviewNote}

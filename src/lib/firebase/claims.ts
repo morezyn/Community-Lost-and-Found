@@ -227,15 +227,21 @@ export async function reviewClaim({
 
   await batch.commit();
 
-  await createNotification({
-    userId: claim.claimantId,
-    type: decision === "approved" ? "claim_approved" : "claim_rejected",
-    message:
-      decision === "approved"
-        ? `Your response to "${claim.reportTitle}" was approved. Coordinate the hand-over safely.`
-        : `Your response to "${claim.reportTitle}" was rejected.${reviewNote ? ` Note: ${reviewNote}` : ""}`,
-    link: `/reports/${claim.reportId}`,
-  });
+  try {
+    await createNotification({
+      userId: claim.claimantId,
+      type: decision === "approved" ? "claim_approved" : "claim_rejected",
+      message:
+        decision === "approved"
+          ? `Your response to "${claim.reportTitle}" was approved. Coordinate the hand-over safely.`
+          : `Your response to "${claim.reportTitle}" was rejected.${reviewNote ? ` Note: ${reviewNote}` : ""}`,
+      link: `/reports/${claim.reportId}`,
+    });
+  } catch (error) {
+    // Best effort: the review itself already committed; a notification rule/env
+    // mismatch must not surface as a failed approval/rejection.
+    console.warn("Failed to notify claimant after claim review", error);
+  }
 }
 
 /** Marks a notification-style claim status change without touching the report. */

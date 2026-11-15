@@ -49,8 +49,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Claim, Report } from "@/types";
 
 export function ProfilePage() {
-  const { profile, firebaseUser, emailVerified, loading, refreshProfile } = useAuth();
+  const { profile, firebaseUser, emailVerified, loading, refreshProfile, refreshVerification } =
+    useAuth();
   const [tab, setTab] = React.useState("reports");
+  const [checkingVerification, setCheckingVerification] = React.useState(false);
 
   React.useEffect(() => {
     if (window.location.hash === "#notifications") setTab("notifications");
@@ -136,6 +138,22 @@ export function ProfilePage() {
     }
   }
 
+  async function handleRefreshVerification() {
+    setCheckingVerification(true);
+    try {
+      const verified = await refreshVerification();
+      if (verified) {
+        toast.success("Email verified — you can now use all features.");
+      } else {
+        toast.message("Email not verified yet. Check your inbox and try again.");
+      }
+    } catch (error) {
+      toast.error(describeFirebaseError(error, "Could not check verification status"));
+    } finally {
+      setCheckingVerification(false);
+    }
+  }
+
   async function handleMarkAllRead() {
     try {
       await markAllNotificationsRead(profile!.uid);
@@ -192,10 +210,20 @@ export function ProfilePage() {
       {!emailVerified && (
         <Alert variant="warning">
           <MailCheck />
-          <AlertTitle>Verify your email to post</AlertTitle>
+          <AlertTitle>Verify your email to unlock all features</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-2">
-            Posting reports, comments, and claims requires a verified email.            <Button size="sm" variant="outline" onClick={handleResendVerification}>
+            Posting reports and comments requires a verified email. You can still submit
+            found-item responses and claims. After verifying, refresh your status here.
+            <Button size="sm" variant="outline" onClick={handleResendVerification}>
               Resend email
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleRefreshVerification}
+              disabled={checkingVerification}
+            >
+              {checkingVerification ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+              I&apos;ve verified
             </Button>
           </AlertDescription>
         </Alert>
@@ -452,18 +480,30 @@ export function ProfilePage() {
                 <p className="text-sm font-medium">Email verification</p>
                 <p className="text-xs text-muted-foreground">
                   {emailVerified
-                    ? "Your email is verified."
-                    : "Verify your email to post reports and comments."}
+                    ? "Your email is verified. All user features are available."
+                    : "Verify your email to post reports and comments. After verifying, refresh your status to unlock all features."}
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResendVerification}
-                disabled={emailVerified}
-              >
-                <RefreshCw /> Resend email
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResendVerification}
+                  disabled={emailVerified}
+                >
+                  <MailCheck /> Resend email
+                </Button>
+                {!emailVerified && (
+                  <Button
+                    size="sm"
+                    onClick={handleRefreshVerification}
+                    disabled={checkingVerification}
+                  >
+                    {checkingVerification ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+                    Refresh status
+                  </Button>
+                )}
+              </div>
             </div>
 
             <Separator />

@@ -3,10 +3,11 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, PackageSearch, ShieldQuestion } from "lucide-react";
+import { ImagePlus, Loader2, PackageSearch, ShieldQuestion, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { claimSchema, type ClaimSchemaValues } from "@/lib/validators";
+import { claimSchema, validateImageFile, type ClaimSchemaValues } from "@/lib/validators";
+import { uploadReportImage } from "@/lib/cloudinary";
 import { describeFirebaseError } from "@/lib/firebase/errors";
 import { createClaim } from "@/lib/firebase/claims";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +43,11 @@ interface ClaimDialogProps {
 export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
   const { profile } = useAuth();
   const isFinderResponse = report.type === "lost";
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [proofImage, setProofImage] = React.useState<{ file: File; previewUrl: string } | null>(
+    null,
+  );
+  const [uploadingProof, setUploadingProof] = React.useState(false);
 
   const {
     register,
@@ -53,6 +59,49 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
     defaultValues: { answer: "", proofDescription: "" },
   });
 
+  function clearProofImage() {
+    setProofImage((current) => {
+      if (current) URL.revokeObjectURL(current.previewUrl);
+      return null;
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  const proofPreviewUrlRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    proofPreviewUrlRef.current = proofImage?.previewUrl ?? null;
+  }, [proofImage]);
+
+  React.useEffect(() => {
+    return () => {
+      if (proofPreviewUrlRef.current) URL.revokeObjectURL(proofPreviewUrlRef.current);
+    };
+  }, []);
+
+  function handleDialogOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      clearProofImage();
+      reset();
+    }
+    onOpenChange(nextOpen);
+  }
+
+  function handleProofFile(fileList: FileList | null) {
+    const file = fileList?.[0];
+    if (!file) return;
+    const error = validateImageFile(file);
+    if (error) {
+      toast.error(error);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setProofImage((current) => {
+      if (current) URL.revokeObjectURL(current.previewUrl);
+      return { file, previewUrl: URL.createObjectURL(file) };
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   async function onSubmit(values: ClaimSchemaValues) {
     if (!profile) {
       toast.error(
@@ -61,20 +110,30 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
       return;
     }
     try {
+      let proofImageUrl: string | null = null;
+      if (proofImage) {
+        setUploadingProof(true);
+        try {
+          const uploaded = await uploadReportImage(proofImage.file, report.id);
+          proofImageUrl = uploaded.url;
+        } finally {
+          setUploadingProof(false);
+        }
+      }
+
       await createClaim({
         report,
         claimant: { uid: profile.uid, displayName: profile.displayName },
         answer: values.answer,
         proofDescription: values.proofDescription,
-        // NOTE: optional proof photo is intentionally not collected in this
-        // build - the written proof + verification answer cover the demo.
-        proofImageUrl: null,
+        proofImageUrl,
       });
       toast.success(
         isFinderResponse
           ? "Sent — the owner has been notified"
           : "Claim submitted — the finder will review it",
       );
+      clearProofImage();
       reset();
       onOpenChange(false);
     } catch (error) {
@@ -89,8 +148,10 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
     }
   }
 
+  const busy = isSubmitting || uploadingProof;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -171,18 +232,71 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
             )}
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="claim-proof-photo">Proof photo (optional)</Label>
+            {proofImage ? (
+              <div className="group relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={proofImage.previewUrl}
+                  alt="Selected proof photo preview"
+                  className="size-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={clearProofImage}
+                  disabled={busy}
+                  className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-destructive disabled:opacity-50"
+                  aria-label="Remove proof photo"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={busy}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/30 px-3 py-4 text-sm text-muted-foreground transition hover:border-primary/60 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ImagePlus className="size-4" />
+                <span>
+                  {isFinderResponse
+                    ? "Add a photo of the found item"
+                    : "Add a photo that helps prove it's yours"}
+                </span>
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              id="claim-proof-photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => handleProofFile(event.target.files)}
+            />
+            <p className="text-xs text-muted-foreground">
+              JPEG, PNG, or WebP · up to 5 MB · shared only with the report owner and
+              moderators.
+            </p>
+          </div>
+
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              onClick={() => handleDialogOpenChange(false)}
+              disabled={busy}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="animate-spin" />}
-              {isFinderResponse ? "Send to owner" : "Submit claim"}
+            <Button type="submit" disabled={busy}>
+              {busy && <Loader2 className="animate-spin" />}
+              {uploadingProof
+                ? "Uploading photo…"
+                : isFinderResponse
+                  ? "Send to owner"
+                  : "Submit claim"}
             </Button>
           </DialogFooter>
         </form>

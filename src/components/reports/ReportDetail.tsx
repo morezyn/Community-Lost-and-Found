@@ -330,42 +330,116 @@ export function ReportDetail({ reportId }: { reportId: string }) {
             </section>
           )}
 
-          {canReviewClaims && reportClaims.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="text-base font-semibold">
-                {isFinderResponse ? "Found reports" : "Claims"}{" "}
-                <span className="text-sm font-normal text-muted-foreground">
-                  ({reportClaims.length})
-                </span>
-              </h2>
-              <div className="space-y-3">
-                {reportClaims.map((claim) => (
-                  <ClaimReviewCard
-                    key={claim.id}
-                    claim={claim}
-                    canReview={canReviewClaims && claim.status === "pending"}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+          {(report.type === "lost" || report.type === "found") &&
+            report.status === "approved" && (
+              <section className="space-y-3 rounded-xl border bg-card p-4 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <h2 className="flex items-center gap-2 text-base font-semibold">
+                      {isFinderResponse ? (
+                        <PackageSearch className="size-4 text-emerald-600" />
+                      ) : (
+                        <ShieldCheck className="size-4 text-emerald-600" />
+                      )}
+                      {isFinderResponse ? "Found this item?" : "Is this yours?"}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {isFinderResponse
+                        ? "If you found this, let the owner know where it is. Your message is shared privately with the owner and moderators."
+                        : "If this belongs to you, submit a claim so the finder can verify and return it."}
+                    </p>
+                  </div>
+                  {canRespond && (
+                    <Button onClick={() => setClaimOpen(true)} className="shrink-0">
+                      {isFinderResponse ? <PackageSearch /> : <ShieldCheck />}
+                      {isFinderResponse ? "I found this" : "This is mine"}
+                    </Button>
+                  )}
+                  {myClaim?.status === "pending" && (
+                    <Button disabled variant="secondary" className="shrink-0">
+                      <Clock /> {isFinderResponse ? "Response pending" : "Claim pending"}
+                    </Button>
+                  )}
+                  {!isSignedIn && (
+                    <Button asChild className="shrink-0">
+                      <Link href={`/login?redirect=/reports/${report.id}`}>
+                        {isFinderResponse ? <PackageSearch /> : <ShieldCheck />}
+                        {isFinderResponse ? "Sign in to report it found" : "Sign in to claim"}
+                      </Link>
+                    </Button>
+                  )}
+                  {/* Submissions (claims/finder responses) do not require email verification. */}
+                </div>
 
-          {myClaim && !canReviewClaims && (
-            <section className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card px-4 py-3">
-              <div className="flex items-center gap-2 text-sm">
-                {isFinderResponse ? (
-                  <PackageSearch className="size-4 text-muted-foreground" />
-                ) : (
-                  <ShieldCheck className="size-4 text-muted-foreground" />
+                {myClaim && !canReviewClaims && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+                    <span className="flex items-center gap-2">
+                      {isFinderResponse ? "Your response:" : "Your claim:"}
+                      <ClaimStatusBadge status={myClaim.status} />
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Submitted {timeAgo(myClaim.createdAt)}
+                    </span>
+                  </div>
                 )}
-                {isFinderResponse ? "Your response:" : "Your claim:"}
-                <ClaimStatusBadge status={myClaim.status} />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                Submitted {timeAgo(myClaim.createdAt)}
-              </span>
-            </section>
-          )}
+
+                {isAuthor && (
+                  <p className="text-xs text-muted-foreground">
+                    {isFinderResponse
+                      ? "Responses from people who found your item appear below for you to review."
+                      : "Claims from potential owners appear below for you to review."}
+                  </p>
+                )}
+
+                {canReviewClaims && reportClaims.length > 0 ? (
+                  <div className="space-y-3 pt-1">
+                    <h3 className="text-sm font-semibold">
+                      {isFinderResponse ? "Found reports" : "Claims"}{" "}
+                      <span className="font-normal text-muted-foreground">
+                        ({reportClaims.length})
+                      </span>
+                    </h3>
+                    <div className="space-y-3">
+                      {reportClaims.map((claim) => (
+                        <ClaimReviewCard
+                          key={claim.id}
+                          claim={claim}
+                          canReview={canReviewClaims && claim.status === "pending"}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : canReviewClaims ? (
+                  <p className="text-sm text-muted-foreground">
+                    {isFinderResponse
+                      ? "No one has reported finding this item yet."
+                      : "No claims yet."}
+                  </p>
+                ) : null}
+              </section>
+            )}
+
+          {canReviewClaims &&
+            reportClaims.length > 0 &&
+            !(report.type === "lost" || report.type === "found") && (
+              <section className="space-y-3">
+                <h2 className="text-base font-semibold">
+                  Responses{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({reportClaims.length})
+                  </span>
+                </h2>
+                <div className="space-y-3">
+                  {reportClaims.map((claim) => (
+                    <ClaimReviewCard
+                      key={claim.id}
+                      claim={claim}
+                      canReview={canReviewClaims && claim.status === "pending"}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
           <Separator />
 
@@ -427,26 +501,14 @@ export function ReportDetail({ reportId }: { reportId: string }) {
             <Separator />
 
             <div className="space-y-2">
-              {canRespond && (
-                <Button className="w-full" onClick={() => setClaimOpen(true)}>
-                  {isFinderResponse ? <PackageSearch /> : <ShieldCheck />}
-                  {isFinderResponse ? "I found this" : "This is mine"}
-                </Button>
-              )}
-              {myClaim?.status === "pending" && (
-                <Button className="w-full" disabled variant="secondary">
-                  <Clock /> {isFinderResponse ? "Response pending review" : "Claim pending review"}
-                </Button>
-              )}
-
-              {!isSignedIn &&
-                (report.type === "found" || report.type === "lost") &&
-                report.status === "approved" && (
-                  <Button className="w-full" asChild>
-                    <Link href={`/login?redirect=/reports/${report.id}`}>
-                      {isFinderResponse ? <PackageSearch /> : <ShieldCheck />}
-                      {isFinderResponse ? "Sign in to report it found" : "Sign in to claim"}
-                    </Link>
+              {myClaim?.status === "pending" &&
+                !(
+                  (report.type === "found" || report.type === "lost") &&
+                  report.status === "approved"
+                ) && (
+                  <Button className="w-full" disabled variant="secondary">
+                    <Clock />{" "}
+                    {isFinderResponse ? "Response pending review" : "Claim pending review"}
                   </Button>
                 )}
 
@@ -521,7 +583,8 @@ export function ReportDetail({ reportId }: { reportId: string }) {
 
             {isSignedIn && !emailVerified && (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-center text-[11px] text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
-                Verify your email to comment, claim, or report a find.
+                Verify your email to comment or post reports. You can still submit
+                found-item responses and claims.
               </p>
             )}
           </div>
