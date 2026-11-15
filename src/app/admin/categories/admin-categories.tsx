@@ -24,6 +24,7 @@ import { REPORT_TYPE_META } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { cn, timeAgo } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdminNav } from "@/components/layout/AdminNav";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -194,6 +195,8 @@ export function AdminCategories() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8">
+      <AdminNav />
+
       <PageHeader
         eyebrow="Admin"
         title="Categories"

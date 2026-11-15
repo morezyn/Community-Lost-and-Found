@@ -10,11 +10,11 @@ import { ROLE_META } from "@/lib/constants";
 import { formatDate, initials } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdminNav } from "@/components/layout/AdminNav";
 import { ConfirmDialog } from "@/components/layout/ConfirmDialog";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -82,6 +82,8 @@ export function AdminUsers() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8">
+      <AdminNav />
+
       <PageHeader
         eyebrow="Admin"
         title="Members"
@@ -216,10 +218,3 @@ export function AdminUsers() {
   );
 }
 
-export function AdminUsersHeaderAction() {
-  return (
-    <Button variant="outline" size="sm" asChild>
-      <a href="/admin/categories">Categories</a>
-    </Button>
-  );
-}

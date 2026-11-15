@@ -26,6 +26,7 @@ import { REPORT_TYPE_META } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdminNav } from "@/components/layout/AdminNav";
 import { ConfirmDialog } from "@/components/layout/ConfirmDialog";
 import { ReportsOverTime } from "@/components/charts/ReportsOverTime";
 import { ByCategory } from "@/components/charts/ByCategory";
@@ -122,6 +123,8 @@ export function AdminDashboard() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8">
+      <AdminNav />
+
       <PageHeader
         eyebrow="Admin"
         title="Dashboard"
@@ -139,6 +142,16 @@ export function AdminDashboard() {
                     {stats.pending}
                   </span>
                 )}
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/users">
+                <Users /> Members
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/categories">
+                <FolderTree /> Categories
               </Link>
             </Button>
           </>

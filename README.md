@@ -34,7 +34,8 @@ CSS v4, React Hook Form + Zod, and Recharts.
 - **Admin** — stat cards, reports-over-time line chart, by-category bar chart,
   type breakdown donut, resolution radial chart, member management (role +
   disable), category management (create / edit / disable / seed), the
-  moderator category-request queue, and one-click demo seeding.
+  moderator category-request queue, and one-click demo seeding. The admin area
+  shares a **Dashboard / Members / Categories** sub-nav.
 - **UX** — dark mode, loading skeletons, empty states, toast feedback, inline
   Zod errors, keyboard-accessible dialogs, mobile-first layout.
 
