@@ -174,6 +174,22 @@ export const categorySchema = z.object({
 
 export type CategorySchemaValues = z.infer<typeof categorySchema>;
 
+/**
+ * Moderators propose categories; admins approve them. Shares the name/applies-to
+ * rules with `categorySchema` so an approved request always yields a valid
+ * category document.
+ */
+export const categoryRequestSchema = categorySchema
+  .pick({ name: true, appliesTo: true })
+  .extend({
+    note: z
+      .string()
+      .trim()
+      .max(200, "Keep the reason under 200 characters"),
+  });
+
+export type CategoryRequestSchemaValues = z.infer<typeof categoryRequestSchema>;
+
 /* ------------------------------------------------------------------ */
 /* Image validation helpers (used outside react-hook-form)             */
 /* ------------------------------------------------------------------ */

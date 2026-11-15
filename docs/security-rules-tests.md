@@ -163,6 +163,24 @@ connectFirestoreEmulator(getFirebaseDb(), "127.0.0.1", 8080);
 | 84 | Destroy another user's public id | member | ignored (not deleted) |
 | 85 | Call either route with an invalid ID token | anyone | 401 |
 
+## `categoryRequests/{requestId}`
+
+| # | Scenario | Actor | Expected |
+|---|---|---|---|
+| 86 | Read own category request | requester (moderator) | allow |
+| 87 | Read a category request | admin | allow |
+| 88 | Read someone else's request | other moderator, member, guest | deny |
+| 89 | Create a `pending` request for self with valid name/appliesTo | moderator | allow |
+| 90 | Create a category request | member | deny |
+| 91 | Create a request with someone else's `requestedBy` | moderator | deny |
+| 92 | Create a request that is already `approved` | moderator | deny |
+| 93 | Approve / reject a request | admin | allow |
+| 94 | Approve a request without a `categoryId` | admin | deny |
+| 95 | Set the request status | moderator | deny |
+| 96 | Withdraw own `pending` request | requester | allow |
+| 97 | Withdraw someone else's request | moderator | deny |
+| 98 | Delete any request (cleanup) | admin | allow |
+
 ## Notes / known trade-offs
 
 - Notifications are created client-side (no Cloud Functions in this build). The

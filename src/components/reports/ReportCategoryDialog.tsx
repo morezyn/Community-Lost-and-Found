@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Tag } from "lucide-react";
+import { Loader2, Plus, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 import { subscribeToCategories } from "@/lib/firebase/categories";
 import { approveReport, setReportCategory } from "@/lib/firebase/reports";
 import { describeFirebaseError } from "@/lib/firebase/errors";
+import { CategoryRequestDialog } from "@/components/categories/CategoryRequestDialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -47,6 +48,7 @@ export function ReportCategoryDialog({
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [categoryId, setCategoryId] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const [requestOpen, setRequestOpen] = React.useState(false);
 
   const open = Boolean(report);
 
@@ -110,7 +112,8 @@ export function ReportCategoryDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -139,10 +142,20 @@ export function ReportCategoryDialog({
           </Select>
           {options.length === 0 && (
             <p className="text-xs text-muted-foreground">
-              No active categories match this report type. Add one under Admin →
-              Categories.
+              No active categories match this report type. Request one below, or add it under
+              Admin → Categories.
             </p>
           )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="-ml-2"
+            onClick={() => setRequestOpen(true)}
+            disabled={busy}
+          >
+            <Plus /> Request a new category
+          </Button>
         </div>
 
         <DialogFooter>
@@ -156,5 +169,12 @@ export function ReportCategoryDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      <CategoryRequestDialog
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        suggestedType={report?.type}
+      />
+    </>
   );
 }

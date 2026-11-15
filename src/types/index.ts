@@ -8,6 +8,7 @@ export type Role = "user" | "moderator" | "admin";
 export type ReportType = "lost" | "found" | "incident";
 export type ReportStatus = "pending" | "approved" | "rejected" | "resolved";
 export type ClaimStatus = "pending" | "approved" | "rejected";
+export type CategoryRequestStatus = "pending" | "approved" | "rejected";
 
 export const ROLES: readonly Role[] = ["user", "moderator", "admin"];
 export const REPORT_TYPES: readonly ReportType[] = ["lost", "found", "incident"];
@@ -114,13 +115,39 @@ export interface Category {
   active: boolean;
 }
 
+/**
+ * `categoryRequests/{requestId}` - a moderator's proposal for a new category.
+ *
+ * Moderators cannot write the `categories` collection, so they file a request
+ * instead; approving it creates the category (see lib/firebase/categoryRequests).
+ */
+export interface CategoryRequest {
+  id: string;
+  name: string;
+  appliesTo: ReportType[];
+  /** Why the category is needed. Optional on submit, required on rejection. */
+  note: string | null;
+  status: CategoryRequestStatus;
+  requestedBy: string;
+  requesterName: string;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  /** Set when an admin approves the request and the category is created. */
+  categoryId: string | null;
+  createdAt: Timestamp;
+  reviewedAt: Timestamp | null;
+}
+
 export type NotificationType =
   | "report_approved"
   | "report_rejected"
   | "claim_received"
   | "claim_approved"
   | "claim_rejected"
-  | "new_comment";
+  | "new_comment"
+  | "category_request"
+  | "category_request_approved"
+  | "category_request_rejected";
 
 export interface AppNotification {
   id: string;

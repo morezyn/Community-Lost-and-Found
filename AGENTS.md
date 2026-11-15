@@ -50,7 +50,7 @@ Do not introduce other major dependencies without a clear reason. Prefer the abo
 |---|---|
 | **guest** (not logged in) | Browse and search public reports (read-only). Cannot comment, claim, or post. |
 | **user** | Create/edit/delete own reports, comment, submit claims, mark own report as resolved, manage own profile. |
-| **moderator** | Everything a user can do, plus: approve/reject pending reports, hide inappropriate comments, review claims. |
+| **moderator** | Everything a user can do, plus: approve/reject pending reports, hide inappropriate comments, review claims, request new categories (admin approval required). |
 | **admin** | Everything a moderator can do, plus: manage users and roles, manage categories, view analytics dashboard, delete any content. |
 
 Role is stored in `users/{uid}.role` and enforced in **Firestore Security Rules** and in UI route guards. Never trust the client alone.
@@ -130,6 +130,7 @@ Bell icon in navbar with unread count, dropdown list, mark as read.
 - Queue of `pending` reports with approve/reject (with rejection reason); approving requires picking the category (reports can be re-filed later)
 - Pending claims list
 - Reported/hidden comments list
+- Category requests: moderators propose new categories from the **Categories** tab; only admins can approve/reject them (approval creates the category)
 
 ### 4.9 Admin Dashboard
 - Stat cards: total reports, lost vs found vs incident, resolved rate, active users
@@ -232,6 +233,24 @@ export interface Category {
   active: boolean;
 }
 
+export type CategoryRequestStatus = "pending" | "approved" | "rejected";
+
+/** Moderator proposal for a new category; admins approve and create it. */
+export interface CategoryRequest {
+  id: string;
+  name: string;
+  appliesTo: ReportType[];
+  note: string | null;           // reason, optional on submit
+  status: CategoryRequestStatus;
+  requestedBy: string;
+  requesterName: string;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  categoryId: string | null;     // set on approval
+  createdAt: Timestamp;
+  reviewedAt: Timestamp | null;
+}
+
 export interface AppNotification {
   id: string;
   userId: string;                // recipient
@@ -241,7 +260,10 @@ export interface AppNotification {
     | "claim_received"
     | "claim_approved"
     | "claim_rejected"
-    | "new_comment";
+    | "new_comment"
+    | "category_request"
+    | "category_request_approved"
+    | "category_request_rejected";
   message: string;
   link: string;                  // in-app route
   read: boolean;
@@ -257,6 +279,7 @@ reports/{reportId}/comments/{commentId}
 reports/{reportId}/private/details      // verificationAnswer lives here, NOT on the public doc
 claims/{claimId}
 categories/{categoryId}
+categoryRequests/{requestId}            // moderator proposals, admin-approved
 notifications/{notificationId}
 ```
 
@@ -268,6 +291,8 @@ notifications/{notificationId}
 - `reports`: `categoryId` ASC + `status` ASC + `createdAt` DESC
 - `reports`: `authorId` ASC + `createdAt` DESC
 - `claims`: `reportAuthorId` ASC + `status` ASC + `createdAt` DESC
+- `categoryRequests`: `requestedBy` ASC + `createdAt` DESC
+- `categoryRequests`: `status` ASC + `createdAt` ASC
 - `notifications`: `userId` ASC + `read` ASC + `createdAt` DESC
 
 Document the required indexes in `firestore.indexes.json`.
@@ -290,6 +315,7 @@ Write rules in `firestore.rules` and `storage.rules`. Requirements:
 - `comments`: public read when not hidden; create when signed in with `authorId == uid` and text length 1-500; author can delete own; mods can set `hidden`
 - `claims`: create by signed-in non-author; read by claimant, report author, mods/admins; update status only by report author or mods/admins
 - `categories`: public read; write admin only
+- `categoryRequests`: create by mods/admins for their own uid, `pending` only; read by requester and admins; approve/reject by admin only (approval must carry the created `categoryId`); requester may delete while pending, admin may delete any
 - `notifications`: read/update (`read` flag only) by recipient; create via client only for allowed event types (or move to a Cloud Function if time permits)
 
 **Storage**
@@ -343,6 +369,7 @@ Add a short `docs/security-rules-tests.md` listing the scenarios checked (ideall
     │   ├── reports/ (ReportCard, ReportForm, ReportFilters, ReportGallery, StatusBadge)
     │   ├── comments/ (CommentList, CommentForm)F
     │   ├── claims/ (ClaimDialog, ClaimReviewCard)
+    │   ├── categories/ (CategoryRequestDialog, ModerationCategories)
     │   └── charts/ (ReportsOverTime, ByCategory, TypeBreakdown)
     ├── lib/
     │   ├── firebase/
@@ -353,6 +380,7 @@ Add a short `docs/security-rules-tests.md` listing the scenarios checked (ideall
     │   │   ├── claims.ts
     │   │   ├── notifications.ts
     │   │   ├── categories.ts
+    │   │   ├── categoryRequests.ts        # moderator proposals -> admin approval
     │   │   └── storage.ts                # upload/delete images
     │   ├── validators/                   # Zod schemas
     │   ├── utils.ts

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FolderTree, Loader2, Pencil, Plus, Sparkles } from "lucide-react";
+import { FolderTree, Check, Loader2, Pencil, Plus, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -12,10 +12,17 @@ import {
   subscribeToCategories,
   updateCategory,
 } from "@/lib/firebase/categories";
+import {
+  approveCategoryRequest,
+  findCategoryByName,
+  rejectCategoryRequest,
+  subscribeToPendingCategoryRequests,
+} from "@/lib/firebase/categoryRequests";
 import { describeFirebaseError } from "@/lib/firebase/errors";
 import { categorySchema, type CategorySchemaValues } from "@/lib/validators";
 import { REPORT_TYPE_META } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { cn, timeAgo } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -23,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -40,17 +48,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Category, ReportType } from "@/types";
+import type { Category, CategoryRequest, ReportType } from "@/types";
 
 const ALL_TYPES: ReportType[] = ["lost", "found", "incident"];
 
 export function AdminCategories() {
+  const { profile } = useAuth();
   const [categories, setCategories] = React.useState<Category[]>([]);
+  const [requests, setRequests] = React.useState<CategoryRequest[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Category | null>(null);
   const [seeding, setSeeding] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = React.useState<CategoryRequest | null>(null);
+  const [rejectNote, setRejectNote] = React.useState("");
 
   React.useEffect(() => {
     const unsubscribe = subscribeToCategories(
@@ -60,6 +72,17 @@ export function AdminCategories() {
       },
       false,
       () => setLoading(false),
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // Moderator proposals waiting for an admin decision.
+  React.useEffect(() => {
+    const unsubscribe = subscribeToPendingCategoryRequests(
+      setRequests,
+      (error) => {
+        toast.error(describeFirebaseError(error, "Could not load category requests"));
+      },
     );
     return () => unsubscribe();
   }, []);
@@ -114,6 +137,49 @@ export function AdminCategories() {
     }
   }
 
+  async function handleApproveRequest(request: CategoryRequest) {
+    if (!profile) return;
+    setBusyId(request.id);
+    try {
+      // Two requests for the same name must not create duplicate categories.
+      const existing = await findCategoryByName(request.name);
+      if (existing) {
+        toast.error(`"${existing.name}" already exists — reject this request instead.`);
+        return;
+      }
+      await approveCategoryRequest({ request, reviewer: { uid: profile.uid } });
+      toast.success(`Category "${request.name}" created`);
+    } catch (error) {
+      toast.error(describeFirebaseError(error, "Could not approve the request"));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleRejectRequest() {
+    if (!rejectTarget || !profile) return;
+    const note = rejectNote.trim();
+    if (note.length < 5) {
+      toast.error("Add a short reason (at least 5 characters)");
+      return;
+    }
+    setBusyId(rejectTarget.id);
+    try {
+      await rejectCategoryRequest({
+        request: rejectTarget,
+        reviewer: { uid: profile.uid },
+        reviewNote: note,
+      });
+      toast.success("Request rejected");
+      setRejectTarget(null);
+      setRejectNote("");
+    } catch (error) {
+      toast.error(describeFirebaseError(error, "Could not reject the request"));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function toggleActive(category: Category) {
     setBusyId(category.id);
     try {
@@ -144,6 +210,62 @@ export function AdminCategories() {
           </>
         }
       />
+
+      {requests.length > 0 && (
+        <section className="space-y-3 rounded-xl border border-amber-300/60 bg-amber-50/60 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <div>
+            <h2 className="text-sm font-semibold">Category requests ({requests.length})</h2>
+            <p className="text-xs text-muted-foreground">
+              Proposed by moderators. Approving creates the category immediately.
+            </p>
+          </div>
+
+          {requests.map((request) => (
+            <article key={request.id} className="space-y-2 rounded-lg border bg-card p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold">{request.name}</span>
+                {request.appliesTo.map((type) => (
+                  <Badge
+                    key={type}
+                    className={cn("text-[10px]", REPORT_TYPE_META[type].badgeClass)}
+                  >
+                    {REPORT_TYPE_META[type].label}
+                  </Badge>
+                ))}
+                <span className="text-[11px] text-muted-foreground">
+                  by {request.requesterName} · {timeAgo(request.createdAt)}
+                </span>
+              </div>
+
+              {request.note && (
+                <p className="text-xs text-muted-foreground">Reason: {request.note}</p>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => void handleApproveRequest(request)}
+                  disabled={busyId === request.id}
+                >
+                  {busyId === request.id ? <Loader2 className="animate-spin" /> : <Check />}
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setRejectTarget(request);
+                    setRejectNote("");
+                  }}
+                  disabled={busyId === request.id}
+                >
+                  <X /> Reject
+                </Button>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
 
       {loading ? (
         <div className="space-y-2">
@@ -299,6 +421,42 @@ export function AdminCategories() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(rejectTarget)}
+        onOpenChange={(open) => {
+          if (!open) setRejectTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject category request</DialogTitle>
+            <DialogDescription>
+              The moderator is notified with your reason and can submit a better proposal.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            rows={3}
+            value={rejectNote}
+            onChange={(event) => setRejectNote(event.target.value)}
+            placeholder="e.g. Covered by the existing Electronics category"
+            maxLength={200}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleRejectRequest()}
+              disabled={busyId !== null}
+            >
+              {busyId ? <Loader2 className="animate-spin" /> : <X />}
+              Reject request
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

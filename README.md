@@ -21,7 +21,8 @@ CSS v4, React Hook Form + Zod, and Recharts.
 - **Moderation** — pending queue with approve/reject + reason, pending claims,
   hidden comments. Approving asks for the category (required); published
   reports can be re-filed later. New reports from members start as `pending`
-  (configurable).
+  (configurable). Moderators can also **request a new category**; the request
+  appears in the admin queue and becomes a real category only when approved.
 - **Browse &amp; search** — type / category / status / location / date filters,
   debounced text search, cursor pagination (`startAfter`), newest/oldest sort.
 - **Real-time** — live comment threads, live report status badges, live
@@ -32,7 +33,8 @@ CSS v4, React Hook Form + Zod, and Recharts.
   Approval resolves the report and rejects competing claims atomically.
 - **Admin** — stat cards, reports-over-time line chart, by-category bar chart,
   type breakdown donut, resolution radial chart, member management (role +
-  disable), category management, and one-click demo seeding.
+  disable), category management (create / edit / disable / seed), the
+  moderator category-request queue, and one-click demo seeding.
 - **UX** — dark mode, loading skeletons, empty states, toast feedback, inline
   Zod errors, keyboard-accessible dialogs, mobile-first layout.
 
@@ -216,6 +218,7 @@ reports/{reportId}/comments/{commentId}
 reports/{reportId}/private/details      # verificationAnswer only
 claims/{claimId}
 categories/{categoryId}
+categoryRequests/{requestId}            # moderator proposals, admin-approved
 notifications/{notificationId}
 config/app                              # { requireApproval: boolean }
 ```
@@ -232,6 +235,11 @@ Key decisions:
 - `searchTokens` holds lowercased title/description/location words for a future
   `array-contains` query. Today search runs client-side over the fetched page —
   documented in `src/lib/firebase/reports.ts`.
+- `categories` is admin-only, so moderators propose changes through
+  `categoryRequests`: they can create a `pending` request for their own uid and
+  withdraw it while pending. Only an admin can move it to `approved`/`rejected`,
+  and approving writes the category document in the same batch as the status
+  change — a half-approved request cannot exist.
 - Report status: `pending → approved → resolved`, or `pending → rejected`.
 - `images` holds Cloudinary `secure_url`s; `imagePaths` holds the matching
   `public_id`s (used for deletion, never rendered).
@@ -252,6 +260,9 @@ only.
   members when `config/app.requireApproval == false`.
 - Claims can only be created by verified non-authors against an `approved`
   `found` report, and only the report author or a mod/admin can review them.
+- `categories` is admin-write-only. Moderators file `categoryRequests` for their
+  own uid (`pending` only) and may withdraw them while pending; admins alone set
+  `approved`/`rejected`, and approval must include the created `categoryId`.
 - Photo ownership is enforced server-side: `/api/cloudinary/destroy` refuses
   public ids outside `findit/{uid}/`.
 
@@ -262,7 +273,8 @@ the rules are written to satisfy.
 
 `firestore.indexes.json` includes the recommended indexes: status+createdAt,
 status+type+createdAt, status+categoryId+createdAt, authorId+createdAt,
-claims by report/claimant/author, notifications by user, moderation queues.
+claims by report/claimant/author, category requests by requester/status,
+notifications by user, moderation queues.
 
 ---
 
@@ -275,6 +287,9 @@ claims by report/claimant/author, notifications by user, moderation queues.
    notification lands in the author's bell.
 3. Member claims a found item → the finder approves the claim → the report
    becomes **Resolved** and the competing claims are rejected in one batch.
+4. Moderator requests a category from **/moderation → Categories** → it appears
+   instantly in **/admin/categories** for the admin; approving it creates the
+   category and the moderator gets a notification.
 
 ---
 

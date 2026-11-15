@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { TypeBadge } from "@/components/reports/StatusBadge";
 import { ReportCategoryDialog } from "@/components/reports/ReportCategoryDialog";
+import { ModerationCategories } from "@/components/categories/ModerationCategories";
 import { ClaimReviewCard } from "@/components/claims/ClaimReviewCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -125,6 +126,7 @@ export function ModerationPanel() {
             Hidden comments
             <CountBadge count={hiddenComments.length} />
           </TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
 
         <TabsContent value="reports" className="space-y-3 pt-4">
@@ -263,6 +265,10 @@ export function ModerationPanel() {
               </article>
             ))
           )}
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <ModerationCategories />
         </TabsContent>
       </Tabs>
 
