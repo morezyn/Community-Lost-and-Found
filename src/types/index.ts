@@ -90,10 +90,20 @@ export interface Comment {
   createdAt: Timestamp;
 }
 
+/**
+ * A response to a report, in either direction:
+ * - `found` report -> the owner claims the item ("This is mine").
+ * - `lost` report  -> a finder reports where the item is ("I found this").
+ *
+ * Both live in `claims` because the shape and review path are identical; the
+ * denormalized `reportType` lets every list use the right wording.
+ */
 export interface Claim {
   id: string;
   reportId: string;
   reportTitle: string;
+  /** Denormalized from the report so lists can label claims vs finder replies. */
+  reportType: ReportType;
   reportAuthorId: string;
   claimantId: string;
   claimantName: string;

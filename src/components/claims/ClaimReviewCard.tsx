@@ -21,6 +21,8 @@ interface ClaimReviewCardProps {
 
 export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
   const { profile } = useAuth();
+  // `lost` reports collect finder replies; `found` reports collect owner claims.
+  const isFinderResponse = claim.reportType === "lost";
   const [note, setNote] = React.useState("");
   const [busy, setBusy] = React.useState<"approved" | "rejected" | null>(null);
 
@@ -39,11 +41,20 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
         reviewNote: note.trim(),
       });
       toast.success(
-        decision === "approved" ? "Claim approved — item marked resolved" : "Claim rejected",
+        decision === "approved"
+          ? "Approved — report marked resolved"
+          : isFinderResponse
+            ? "Response rejected"
+            : "Claim rejected",
       );
       setNote("");
     } catch (error) {
-      toast.error(describeFirebaseError(error, "Could not review this claim"));
+      toast.error(
+        describeFirebaseError(
+          error,
+          isFinderResponse ? "Could not review this response" : "Could not review this claim",
+        ),
+      );
     } finally {
       setBusy(null);
     }
@@ -55,7 +66,7 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold">{claim.claimantName}</span>
           <span className="text-[11px] text-muted-foreground">
-            claimed {timeAgo(claim.createdAt)}
+            {isFinderResponse ? "reported finding it" : "claimed"} {timeAgo(claim.createdAt)}
           </span>
         </div>
         <ClaimStatusBadge status={claim.status} />
@@ -64,7 +75,8 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
       {claim.answer && (
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            <ShieldCheck className="size-3" /> Verification answer
+            <ShieldCheck className="size-3" />{" "}
+            {isFinderResponse ? "Where they found it" : "Verification answer"}
           </p>
           <p className="rounded-lg bg-muted/60 px-3 py-2 text-sm">{claim.answer}</p>
         </div>
@@ -113,7 +125,7 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
               disabled={busy !== null}
             >
               {busy === "approved" ? <Loader2 className="animate-spin" /> : <Check />}
-              Approve claim
+              {isFinderResponse ? "Approve" : "Approve claim"}
             </Button>
           </div>
         </div>

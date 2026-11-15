@@ -304,10 +304,14 @@ service cloud.firestore {
         && (request.resource.data.answer.size() > 0
             || request.resource.data.proofDescription.size() > 0)
         && reportData().authorId == request.resource.data.reportAuthorId
-        && reportData().type == 'found'
+        // Mirrors the UI: a `found` post takes ownership claims ("this is mine"),
+        // a `lost` post takes finder responses ("I found this"). Same document
+        // shape and the same author/moderator review path.
+        && reportData().type in ['found', 'lost']
+        && request.resource.data.reportType == reportData().type
         && reportData().status == 'approved'
         && request.resource.data.keys().hasOnly([
-          'reportId', 'reportTitle', 'reportAuthorId', 'claimantId',
+          'reportId', 'reportTitle', 'reportType', 'reportAuthorId', 'claimantId',
           'claimantName', 'answer', 'proofDescription', 'proofImageUrl',
           'status', 'reviewedBy', 'reviewNote', 'createdAt', 'reviewedAt'
         ]);

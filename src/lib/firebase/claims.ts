@@ -27,14 +27,20 @@ function mapClaim(id: string, data: Record<string, unknown>): Claim {
 }
 
 export interface CreateClaimInput {
-  report: Pick<Report, "id" | "title" | "authorId">;
+  report: Pick<Report, "id" | "title" | "authorId" | "type">;
   claimant: { uid: string; displayName: string };
   answer: string;
   proofDescription: string;
   proofImageUrl: string | null;
 }
 
-/** Submits a claim and notifies the report author. */
+/**
+ * Submits a response to a report and notifies its author.
+ *
+ * One collection covers both directions of the hand-off:
+ * - `found` post -> "this is mine" (owner claiming what someone picked up)
+ * - `lost` post  -> "I found this" (finder telling the owner where it is)
+ */
 export async function createClaim({
   report,
   claimant,
@@ -45,6 +51,7 @@ export async function createClaim({
   const created = await addDoc(collection(getFirebaseDb(), CLAIMS), {
     reportId: report.id,
     reportTitle: report.title,
+    reportType: report.type,
     reportAuthorId: report.authorId,
     claimantId: claimant.uid,
     claimantName: claimant.displayName,
@@ -61,7 +68,10 @@ export async function createClaim({
   await createNotification({
     userId: report.authorId,
     type: "claim_received",
-    message: `${claimant.displayName} claimed your found item "${report.title}".`,
+    message:
+      report.type === "lost"
+        ? `${claimant.displayName} reported finding your lost item "${report.title}".`
+        : `${claimant.displayName} claimed your found item "${report.title}".`,
     link: `/reports/${report.id}`,
   });
 
@@ -209,7 +219,7 @@ export async function reviewClaim({
       batch.update(item.ref, {
         status: "rejected",
         reviewedBy: reviewer.uid,
-        reviewNote: "Another claim was approved for this item.",
+        reviewNote: "Another response was approved for this item.",
         reviewedAt: serverTimestamp(),
       });
     });
@@ -222,8 +232,8 @@ export async function reviewClaim({
     type: decision === "approved" ? "claim_approved" : "claim_rejected",
     message:
       decision === "approved"
-        ? `Your claim on "${claim.reportTitle}" was approved. Coordinate pickup with the finder.`
-        : `Your claim on "${claim.reportTitle}" was rejected.${reviewNote ? ` Note: ${reviewNote}` : ""}`,
+        ? `Your response to "${claim.reportTitle}" was approved. Coordinate the hand-over safely.`
+        : `Your response to "${claim.reportTitle}" was rejected.${reviewNote ? ` Note: ${reviewNote}` : ""}`,
     link: `/reports/${claim.reportId}`,
   });
 }

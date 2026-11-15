@@ -109,17 +109,18 @@ connectFirestoreEmulator(getFirebaseDb(), "127.0.0.1", 8080);
 |---|---|---|---|
 | 51 | Create a claim on someone else's `approved` found report | verified member | allow |
 | 52 | Claim your own report | author | deny |
-| 53 | Claim a `lost` report | member | deny |
-| 54 | Claim a `pending` / `resolved` report | member | deny |
-| 55 | Create claim with unverified email | member | deny |
-| 56 | Read own claim | claimant | allow |
-| 57 | Read claim on your report | report author | allow |
-| 58 | Read any claim | moderator / admin | allow |
-| 59 | Read someone else's claim | unrelated member | deny |
-| 60 | Approve / reject claim | report author | allow |
-| 61 | Approve / reject claim | moderator / admin | allow |
-| 62 | Approve / reject claim | claimant | deny |
-| 63 | Change claim `claimantId` | anyone | deny |
+| 53 | Report finding someone else's `approved` lost item ("I found this") | verified member | allow |
+| 54 | Respond to a `pending` / `resolved` report | member | deny |
+| 55 | Create a response with unverified email | member | deny |
+| 56 | Create a response whose `reportType` disagrees with the report | member | deny |
+| 57 | Read own claim / response | claimant | allow |
+| 58 | Read claim on your report | report author | allow |
+| 59 | Read any claim | moderator / admin | allow |
+| 60 | Read someone else's claim | unrelated member | deny |
+| 61 | Approve / reject claim | report author | allow |
+| 62 | Approve / reject claim | moderator / admin | allow |
+| 63 | Approve / reject claim | claimant | deny |
+| 64 | Change claim `claimantId` | anyone | deny |
 
 ## `categories/{categoryId}`
 

@@ -213,6 +213,7 @@ export interface Claim {
   id: string;
   reportId: string;
   reportTitle: string;
+  reportType: ReportType;        // denormalized: `found` claim vs `lost` finder reply
   reportAuthorId: string;
   claimantId: string;
   claimantName: string;
@@ -313,7 +314,7 @@ Write rules in `firestore.rules` and `storage.rules`. Requirements:
   - Delete: author or admin
 - `reports/{id}/private/details`: read/write only by report author and mods/admins
 - `comments`: public read when not hidden; create when signed in with `authorId == uid` and text length 1-500; author can delete own; mods can set `hidden`
-- `claims`: create by signed-in non-author; read by claimant, report author, mods/admins; update status only by report author or mods/admins
+- `claims`: one collection for both directions — an owner claiming a `found` post, or a finder answering a `lost` post ("I found this"). Create by signed-in non-author against an `approved` report, `reportType` must match; read by claimant, report author, mods/admins; update status only by report author or mods/admins
 - `categories`: public read; write admin only
 - `categoryRequests`: create by mods/admins for their own uid, `pending` only; read by requester and admins; approve/reject by admin only (approval must carry the created `categoryId`); requester may delete while pending, admin may delete any
 - `notifications`: read/update (`read` flag only) by recipient; create via client only for allowed event types (or move to a Cloud Function if time permits)

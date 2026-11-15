@@ -29,8 +29,11 @@ CSS v4, React Hook Form + Zod, and Recharts.
   notification bell with unread count, and email-verification state that flips
   without a reload (verified in another tab → the banner clears within seconds).
   All listeners unsubscribe on unmount.
-- **Claims** — “This is mine” flow with verification answer + proof text.
-  Approval resolves the report and rejects competing claims atomically.
+- **Claims &amp; found reports** — two directions in one flow. On a *found* post
+  the owner clicks “This is mine”; on a *lost* post whoever finds the item
+  clicks “I found this” and tells the owner where it is. The report author (or a
+  moderator) reviews each response; approval resolves the report and rejects the
+  competing ones atomically.
 - **Admin** — stat cards, reports-over-time line chart, by-category bar chart,
   type breakdown donut, resolution radial chart, member management (role +
   disable), category management (create / edit / disable / seed), the
@@ -260,7 +263,8 @@ only.
 - Publishing (`status: "approved"` on create) is limited to mods/admins, or to
   members when `config/app.requireApproval == false`.
 - Claims can only be created by verified non-authors against an `approved`
-  `found` report, and only the report author or a mod/admin can review them.
+  `found` or `lost` report (`reportType` on the claim must match), and only the
+  report author or a mod/admin can review them.
 - `categories` is admin-write-only. Moderators file `categoryRequests` for their
   own uid (`pending` only) and may withdraw them while pending; admins alone set
   `approved`/`rejected`, and approval must include the created `categoryId`.
@@ -288,7 +292,10 @@ notifications by user, moderation queues.
    notification lands in the author's bell.
 3. Member claims a found item → the finder approves the claim → the report
    becomes **Resolved** and the competing claims are rejected in one batch.
-4. Moderator requests a category from **/moderation → Categories** → it appears
+4. Reverse direction: on a **lost** post, a second member clicks **I found this**,
+   the owner gets a notification, approves it, and the lost post becomes
+   **Resolved**.
+5. Moderator requests a category from **/moderation → Categories** → it appears
    instantly in **/admin/categories** for the admin; approving it creates the
    category and the moderator gets a notification.
 

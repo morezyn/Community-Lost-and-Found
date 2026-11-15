@@ -13,6 +13,7 @@ import {
   MapPin,
   MessageSquare,
   MoreHorizontal,
+  PackageSearch,
   Pencil,
   RotateCcw,
   ShieldCheck,
@@ -212,8 +213,14 @@ export function ReportDetail({ reportId }: { reportId: string }) {
 
   const myClaim = myClaims.find((claim) => claim.reportId === report.id);
   const canReviewClaims = isAuthor || isModerator;
-  const canClaim =
-    report.type === "found" &&
+  /**
+   * Both directions of a hand-off start here:
+   * - a `found` post can be claimed by its owner ("This is mine")
+   * - a `lost` post can be answered by whoever found it ("I found this")
+   */
+  const isFinderResponse = report.type === "lost";
+  const canRespond =
+    (report.type === "found" || report.type === "lost") &&
     report.status === "approved" &&
     isSignedIn &&
     !isAuthor &&
@@ -326,7 +333,7 @@ export function ReportDetail({ reportId }: { reportId: string }) {
           {canReviewClaims && reportClaims.length > 0 && (
             <section className="space-y-3">
               <h2 className="text-base font-semibold">
-                Claims{" "}
+                {isFinderResponse ? "Found reports" : "Claims"}{" "}
                 <span className="text-sm font-normal text-muted-foreground">
                   ({reportClaims.length})
                 </span>
@@ -346,8 +353,12 @@ export function ReportDetail({ reportId }: { reportId: string }) {
           {myClaim && !canReviewClaims && (
             <section className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card px-4 py-3">
               <div className="flex items-center gap-2 text-sm">
-                <ShieldCheck className="size-4 text-muted-foreground" />
-                Your claim:
+                {isFinderResponse ? (
+                  <PackageSearch className="size-4 text-muted-foreground" />
+                ) : (
+                  <ShieldCheck className="size-4 text-muted-foreground" />
+                )}
+                {isFinderResponse ? "Your response:" : "Your claim:"}
                 <ClaimStatusBadge status={myClaim.status} />
               </div>
               <span className="text-xs text-muted-foreground">
@@ -416,24 +427,28 @@ export function ReportDetail({ reportId }: { reportId: string }) {
             <Separator />
 
             <div className="space-y-2">
-              {canClaim && (
+              {canRespond && (
                 <Button className="w-full" onClick={() => setClaimOpen(true)}>
-                  <ShieldCheck /> This is mine
+                  {isFinderResponse ? <PackageSearch /> : <ShieldCheck />}
+                  {isFinderResponse ? "I found this" : "This is mine"}
                 </Button>
               )}
               {myClaim?.status === "pending" && (
                 <Button className="w-full" disabled variant="secondary">
-                  <Clock /> Claim pending review
+                  <Clock /> {isFinderResponse ? "Response pending review" : "Claim pending review"}
                 </Button>
               )}
 
-              {!isSignedIn && report.type === "found" && report.status === "approved" && (
-                <Button className="w-full" asChild>
-                  <Link href={`/login?redirect=/reports/${report.id}`}>
-                    <ShieldCheck /> Sign in to claim
-                  </Link>
-                </Button>
-              )}
+              {!isSignedIn &&
+                (report.type === "found" || report.type === "lost") &&
+                report.status === "approved" && (
+                  <Button className="w-full" asChild>
+                    <Link href={`/login?redirect=/reports/${report.id}`}>
+                      {isFinderResponse ? <PackageSearch /> : <ShieldCheck />}
+                      {isFinderResponse ? "Sign in to report it found" : "Sign in to claim"}
+                    </Link>
+                  </Button>
+                )}
 
               {isModerator && report.status === "pending" && (
                 <div className="flex gap-2">
@@ -506,7 +521,7 @@ export function ReportDetail({ reportId }: { reportId: string }) {
 
             {isSignedIn && !emailVerified && (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-center text-[11px] text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
-                Verify your email to comment and claim.
+                Verify your email to comment, claim, or report a find.
               </p>
             )}
           </div>

@@ -194,8 +194,7 @@ export function ProfilePage() {
           <MailCheck />
           <AlertTitle>Verify your email to post</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-2">
-            Posting reports, comments, and claims requires a verified email.
-            <Button size="sm" variant="outline" onClick={handleResendVerification}>
+            Posting reports, comments, and claims requires a verified email.            <Button size="sm" variant="outline" onClick={handleResendVerification}>
               Resend email
             </Button>
           </AlertDescription>
@@ -208,7 +207,7 @@ export function ProfilePage() {
             <PackageSearch /> My reports ({reports.length})
           </TabsTrigger>
           <TabsTrigger value="claims">
-            <ShieldCheck /> Claims
+            <ShieldCheck /> Claims &amp; responses
             {pendingAuthorClaims.length > 0 && (
               <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
                 {pendingAuthorClaims.length}
@@ -258,16 +257,17 @@ export function ProfilePage() {
         <TabsContent value="claims" className="space-y-8 pt-4">
           <section className="space-y-3">
             <div>
-              <h2 className="text-base font-semibold">Claims on your found items</h2>
+              <h2 className="text-base font-semibold">Responses on your reports</h2>
               <p className="text-sm text-muted-foreground">
-                Verify the owner before approving. Approving resolves the report.
+                People who think they found your lost item, and owners claiming one you
+                picked up. Approving resolves the report.
               </p>
             </div>
             {authorClaims.length === 0 ? (
               <EmptyState
                 icon={ShieldCheck}
-                title="No claims on your reports"
-                description="When someone claims a found item you posted, it appears here."
+                title="No responses on your reports"
+                description="When someone finds a lost item you posted, or claims one you picked up, it appears here."
                 className="py-8"
               />
             ) : (
@@ -280,7 +280,10 @@ export function ProfilePage() {
                     >
                       {claim.reportTitle}
                     </Link>
-                    <ClaimReviewCard claim={claim} canReview={claim.status === "pending"} />
+                    <ClaimReviewCard
+                      claim={claim}
+                      canReview={claim.status === "pending"}
+                    />
                   </div>
                 ))}
               </div>
@@ -291,16 +294,16 @@ export function ProfilePage() {
 
           <section className="space-y-3">
             <div>
-              <h2 className="text-base font-semibold">Your claims</h2>
+              <h2 className="text-base font-semibold">Your claims &amp; responses</h2>
               <p className="text-sm text-muted-foreground">
-                Items you asked to claim, and their current status.
+                Items you asked to claim, and lost items you reported finding.
               </p>
             </div>
             {myClaims.length === 0 ? (
               <EmptyState
                 icon={Inbox}
-                title="You haven't claimed anything"
-                description="Found something that's yours? Open the report and choose “This is mine”."
+                title="Nothing submitted yet"
+                description="Found an item? Open the post and choose “This is mine”. Found someone's lost item? Choose “I found this”."
                 className="py-8"
               />
             ) : (
