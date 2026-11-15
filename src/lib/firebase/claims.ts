@@ -1,0 +1,238 @@
+"use client";
+
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  writeBatch,
+  type Unsubscribe,
+} from "firebase/firestore";
+
+import { getFirebaseDb } from "@/lib/firebase/client";
+import { createNotification } from "@/lib/firebase/notifications";
+import type { Claim, ClaimStatus, Report } from "@/types";
+
+const CLAIMS = "claims";
+
+function mapClaim(id: string, data: Record<string, unknown>): Claim {
+  return { id, ...(data as Omit<Claim, "id">) };
+}
+
+export interface CreateClaimInput {
+  report: Pick<Report, "id" | "title" | "authorId">;
+  claimant: { uid: string; displayName: string };
+  answer: string;
+  proofDescription: string;
+  proofImageUrl: string | null;
+}
+
+/** Submits a claim and notifies the report author. */
+export async function createClaim({
+  report,
+  claimant,
+  answer,
+  proofDescription,
+  proofImageUrl,
+}: CreateClaimInput): Promise<string> {
+  const created = await addDoc(collection(getFirebaseDb(), CLAIMS), {
+    reportId: report.id,
+    reportTitle: report.title,
+    reportAuthorId: report.authorId,
+    claimantId: claimant.uid,
+    claimantName: claimant.displayName,
+    answer,
+    proofDescription,
+    proofImageUrl,
+    status: "pending" satisfies ClaimStatus,
+    reviewedBy: null,
+    reviewNote: null,
+    createdAt: serverTimestamp(),
+    reviewedAt: null,
+  });
+
+  await createNotification({
+    userId: report.authorId,
+    type: "claim_received",
+    message: `${claimant.displayName} claimed your found item "${report.title}".`,
+    link: `/reports/${report.id}`,
+  });
+
+  return created.id;
+}
+
+/** Claims for one report (visible to the report author and moderators). */
+export function subscribeToClaimsForReport(
+  reportId: string,
+  onData: (claims: Claim[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const q = query(
+    collection(getFirebaseDb(), CLAIMS),
+    where("reportId", "==", reportId),
+    orderBy("createdAt", "desc"),
+    limit(50),
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => onData(snapshot.docs.map((item) => mapClaim(item.id, item.data()))),
+    (error) => onError?.(error),
+  );
+}
+
+/** Claims submitted by the signed-in user. */
+export function subscribeToMyClaims(
+  claimantId: string,
+  onData: (claims: Claim[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const q = query(
+    collection(getFirebaseDb(), CLAIMS),
+    where("claimantId", "==", claimantId),
+    orderBy("createdAt", "desc"),
+    limit(50),
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => onData(snapshot.docs.map((item) => mapClaim(item.id, item.data()))),
+    (error) => onError?.(error),
+  );
+}
+
+/** Pending claims queue for moderators. */
+export function subscribeToPendingClaims(
+  onData: (claims: Claim[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const q = query(
+    collection(getFirebaseDb(), CLAIMS),
+    where("status", "==", "pending"),
+    orderBy("createdAt", "asc"),
+    limit(100),
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => onData(snapshot.docs.map((item) => mapClaim(item.id, item.data()))),
+    (error) => onError?.(error),
+  );
+}
+
+/** Pending claims on reports owned by `reportAuthorId` (profile review view). */
+export function subscribeToClaimsForAuthor(
+  reportAuthorId: string,
+  onData: (claims: Claim[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const q = query(
+    collection(getFirebaseDb(), CLAIMS),
+    where("reportAuthorId", "==", reportAuthorId),
+    orderBy("createdAt", "desc"),
+    limit(50),
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => onData(snapshot.docs.map((item) => mapClaim(item.id, item.data()))),
+    (error) => onError?.(error),
+  );
+}
+
+/**
+ * Guards against duplicate active claims: a user may only have one *pending*
+ * claim per report. Queried client-side because the uniqueness rule is also
+ * enforced in Firestore rules on create.
+ */
+export async function hasActiveClaim(
+  reportId: string,
+  claimantId: string,
+): Promise<boolean> {
+  const snapshot = await getDocs(
+    query(
+      collection(getFirebaseDb(), CLAIMS),
+      where("reportId", "==", reportId),
+      where("claimantId", "==", claimantId),
+      limit(5),
+    ),
+  );
+  return snapshot.docs.some((item) => item.data().status === "pending");
+}
+
+export interface ReviewClaimInput {
+  claim: Claim;
+  decision: Exclude<ClaimStatus, "pending">;
+  reviewer: { uid: string; displayName: string };
+  reviewNote: string;
+}
+
+/**
+ * Approves or rejects a claim. Approving also resolves the report and rejects
+ * the remaining pending claims in a single atomic batch.
+ */
+export async function reviewClaim({
+  claim,
+  decision,
+  reviewer,
+  reviewNote,
+}: ReviewClaimInput): Promise<void> {
+  const db = getFirebaseDb();
+  const batch = writeBatch(db);
+
+  batch.update(doc(db, CLAIMS, claim.id), {
+    status: decision,
+    reviewedBy: reviewer.uid,
+    reviewNote: reviewNote || null,
+    reviewedAt: serverTimestamp(),
+  });
+
+  if (decision === "approved") {
+    batch.update(doc(db, "reports", claim.reportId), {
+      status: "resolved",
+      resolvedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    const others = await getDocs(
+      query(
+        collection(db, CLAIMS),
+        where("reportId", "==", claim.reportId),
+        where("status", "==", "pending"),
+      ),
+    );
+    others.docs.forEach((item) => {
+      if (item.id === claim.id) return;
+      batch.update(item.ref, {
+        status: "rejected",
+        reviewedBy: reviewer.uid,
+        reviewNote: "Another claim was approved for this item.",
+        reviewedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  await batch.commit();
+
+  await createNotification({
+    userId: claim.claimantId,
+    type: decision === "approved" ? "claim_approved" : "claim_rejected",
+    message:
+      decision === "approved"
+        ? `Your claim on "${claim.reportTitle}" was approved. Coordinate pickup with the finder.`
+        : `Your claim on "${claim.reportTitle}" was rejected.${reviewNote ? ` Note: ${reviewNote}` : ""}`,
+    link: `/reports/${claim.reportId}`,
+  });
+}
+
+/** Marks a notification-style claim status change without touching the report. */
+export async function withdrawClaim(claimId: string): Promise<void> {
+  await updateDoc(doc(getFirebaseDb(), CLAIMS, claimId), {
+    status: "rejected",
+    reviewNote: "Withdrawn by the claimant.",
+    reviewedAt: serverTimestamp(),
+  });
+}

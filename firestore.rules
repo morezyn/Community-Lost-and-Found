@@ -1,0 +1,369 @@
+rules_version = '2';
+
+// FindIt - Firestore security rules
+//
+// Conventions
+//  * Clients never write `role`/`disabled` on their own profile.
+//  * Helpers read users/{uid} so role checks are always server-side.
+//  * Reports store the verification ANSWER in reports/{id}/private/details,
+//    never on the public document.
+//
+// Deploy with: firebase deploy --only firestore:rules
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ------------------------------------------------------------------ */
+    /* Helpers                                                             */
+    /* ------------------------------------------------------------------ */
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function userProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function role() {
+      return isSignedIn() ? userProfile().role : null;
+    }
+
+    function isMod() {
+      return isSignedIn() && role() in ['moderator', 'admin'];
+    }
+
+    function isAdmin() {
+      return isSignedIn() && role() == 'admin';
+    }
+
+    function appConfigExists() {
+      return exists(/databases/$(database)/documents/config/app);
+    }
+
+    function requireApproval() {
+      // Fail safe: if the config document is missing, approval is required.
+      return !appConfigExists()
+        || get(/databases/$(database)/documents/config/app).data.requireApproval != false;
+    }
+
+    function canAutoApprove() {
+      return isMod() || !requireApproval();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* users/{uid}                                                         */
+    /* ------------------------------------------------------------------ */
+
+    match /users/{uid} {
+      function profileFields() {
+        return ['email', 'displayName', 'photoURL', 'role', 'disabled', 'createdAt'];
+      }
+
+      allow read: if isOwner(uid) || isMod();
+
+      // First sign-in creates the profile with the default member role.
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(profileFields())
+        && request.resource.data.role == 'user'
+        && request.resource.data.disabled == false
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 320
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 1
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.createdAt is timestamp;
+
+      // Members edit only presentation fields. Admins manage role/disabled and
+      // may not change their own role or disable themselves.
+      allow update: if (
+          isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['displayName', 'photoURL'])
+        )
+        || (
+          isAdmin()
+          && uid != request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['role', 'disabled'])
+        );
+
+      allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* reports/{reportId}                                                  */
+    /* ------------------------------------------------------------------ */
+
+    match /reports/{reportId} {
+      function isPublic() {
+        return resource.data.status in ['approved', 'resolved'];
+      }
+
+      function isAuthor() {
+        return isSignedIn() && resource.data.authorId == request.auth.uid;
+      }
+
+      // Approved/resolved reports are public; authors and mods see the rest.
+      allow read: if isPublic() || isAuthor() || isMod();
+
+      allow create: if isVerified()
+        && request.resource.data.authorId == request.auth.uid
+        && (
+          request.resource.data.status == 'pending'
+          || (request.resource.data.status == 'approved' && canAutoApprove())
+        )
+        && request.resource.data.type in ['lost', 'found', 'incident']
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 5
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.description is string
+        && request.resource.data.description.size() >= 20
+        && request.resource.data.description.size() <= 2000
+        // Categories are assigned by a moderator during review, so a pending
+        // report legitimately has no category yet. Anything published (mods and
+        // admins auto-publish) must already be filed.
+        && (
+          (
+            request.resource.data.categoryId == null
+            && request.resource.data.categoryName == null
+          )
+          || (
+            request.resource.data.categoryId is string
+            && request.resource.data.categoryId.size() > 0
+            && request.resource.data.categoryName is string
+            && request.resource.data.categoryName.size() > 0
+          )
+        )
+        && (
+          request.resource.data.status == 'pending'
+          || (
+            request.resource.data.categoryId is string
+            && request.resource.data.categoryName is string
+          )
+        )
+        && request.resource.data.locationText is string
+        && request.resource.data.locationText.size() >= 3
+        && request.resource.data.locationText.size() <= 120
+        && request.resource.data.images is list
+        && request.resource.data.images.size() <= 4
+        && request.resource.data.imagePaths is list
+        && request.resource.data.imagePaths.size() <= 4
+        && request.resource.data.commentCount == 0
+        && request.resource.data.keys().hasAny(['authorId'])
+        // The public document must never carry the verification answer.
+        && request.resource.data.keys().hasOnly([
+          'type', 'title', 'description', 'categoryId', 'categoryName',
+          'locationText', 'coordinates', 'eventDate', 'images', 'imagePaths',
+          'status', 'rejectionReason', 'verificationQuestion', 'authorId',
+          'authorName', 'authorPhotoURL', 'commentCount', 'searchTokens',
+          'createdAt', 'updatedAt', 'resolvedAt'
+        ])
+        && !request.resource.data.keys().hasAny(['verificationAnswer']);
+
+      allow update: if (
+        isMod()
+        // Moderators assign categories, so a published report must be filed.
+        && (
+          !(request.resource.data.status in ['approved', 'resolved'])
+          || (
+            request.resource.data.categoryId is string
+            && request.resource.data.categoryName is string
+          )
+        )
+      )
+        // Author editing content, or resolving/reopening their own report.
+        || (
+          isAuthor()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'title', 'description', 'locationText',
+            'coordinates', 'eventDate', 'images', 'imagePaths',
+            'verificationQuestion', 'searchTokens', 'updatedAt',
+            'status', 'resolvedAt'
+          ])
+          && request.resource.data.status in ['pending', 'approved', 'resolved']
+          && request.resource.data.authorId == resource.data.authorId
+          // Authors cannot publish an uncategorized (pending) report themselves.
+          && (
+            request.resource.data.status == 'pending'
+            || (
+              request.resource.data.categoryId is string
+              && request.resource.data.categoryName is string
+            )
+          )
+        )
+        // Any verified member may bump the denormalized comment count by one
+        // (adding a comment) - see lib/firebase/comments.ts.
+        || (
+          isVerified()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
+          && request.resource.data.commentCount in [
+            resource.data.commentCount + 1,
+            resource.data.commentCount - 1
+          ]
+        );
+
+      allow delete: if isAuthor() || isAdmin();
+
+      /* ---------------------------------------------------------------- */
+      /* Private verification details                                      */
+      /* ---------------------------------------------------------------- */
+
+      match /private/{docId} {
+        function reportAuthorId() {
+          return get(/databases/$(database)/documents/reports/$(reportId)).data.authorId;
+        }
+
+        allow read, write: if isOwner(reportAuthorId()) || isMod();
+      }
+
+      /* ---------------------------------------------------------------- */
+      /* comments subcollection                                            */
+      /* ---------------------------------------------------------------- */
+
+      match /comments/{commentId} {
+        function reportAuthorId() {
+          return get(/databases/$(database)/documents/reports/$(reportId)).data.authorId;
+        }
+
+        allow read: if resource.data.hidden == false || isMod();
+
+        allow create: if isVerified()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.reportId == reportId
+          && request.resource.data.text is string
+          && request.resource.data.text.size() >= 1
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.hidden == false
+          && request.resource.data.keys().hasOnly([
+            'reportId', 'authorId', 'authorName', 'authorPhotoURL',
+            'text', 'hidden', 'createdAt'
+          ]);
+
+        // Moderators hide/restore comments; nobody edits comment text.
+        allow update: if isMod()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden']);
+
+        // Comment author, moderators, or the report author (cleanup).
+        allow delete: if isOwner(resource.data.authorId)
+          || isMod()
+          || isOwner(reportAuthorId());
+      }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Collection-group reads for the moderation panel                     */
+    /* ------------------------------------------------------------------ */
+
+    match /{path=**}/comments/{commentId} {
+      allow read: if resource.data.hidden == false || isMod();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* claims/{claimId}                                                    */
+    /* ------------------------------------------------------------------ */
+
+    match /claims/{claimId} {
+      function reportData() {
+        return get(/databases/$(database)/documents/reports/$(request.resource.data.reportId)).data;
+      }
+
+      allow read: if isOwner(resource.data.claimantId)
+        || isOwner(resource.data.reportAuthorId)
+        || isMod();
+
+      allow create: if isVerified()
+        && request.resource.data.claimantId == request.auth.uid
+        && request.resource.data.reportAuthorId != request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.answer is string
+        && request.resource.data.answer.size() <= 500
+        && request.resource.data.proofDescription is string
+        && request.resource.data.proofDescription.size() <= 1000
+        && (request.resource.data.answer.size() > 0
+            || request.resource.data.proofDescription.size() > 0)
+        && reportData().authorId == request.resource.data.reportAuthorId
+        && reportData().type == 'found'
+        && reportData().status == 'approved'
+        && request.resource.data.keys().hasOnly([
+          'reportId', 'reportTitle', 'reportAuthorId', 'claimantId',
+          'claimantName', 'answer', 'proofDescription', 'proofImageUrl',
+          'status', 'reviewedBy', 'reviewNote', 'createdAt', 'reviewedAt'
+        ]);
+
+      // Only the report author or a moderator reviews claims.
+      allow update: if (isOwner(resource.data.reportAuthorId) || isMod())
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'reviewedBy', 'reviewNote', 'reviewedAt'])
+        && request.resource.data.status in ['approved', 'rejected'];
+
+      // Claimant can withdraw, report author/mod cleanup, admin override.
+      allow delete: if isOwner(resource.data.claimantId)
+        || isOwner(resource.data.reportAuthorId)
+        || isMod()
+        || isAdmin();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* categories/{categoryId}                                             */
+    /* ------------------------------------------------------------------ */
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* notifications/{notificationId}                                      */
+    /* ------------------------------------------------------------------ */
+
+    match /notifications/{notificationId} {
+      function isRecipient() {
+        return isSignedIn() && resource.data.userId == request.auth.uid;
+      }
+
+      allow read: if isRecipient();
+
+      // In-app notification fan-out without Cloud Functions (demo scope):
+      // members may create notifications for OTHER users, restricted to the
+      // whitelisted event types and a fixed shape.
+      allow create: if isSignedIn()
+        && request.resource.data.userId != request.auth.uid
+        && request.resource.data.type in [
+          'report_approved', 'report_rejected', 'claim_received',
+          'claim_approved', 'claim_rejected', 'new_comment'
+        ]
+        && request.resource.data.read == false
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 300
+        && request.resource.data.link is string
+        && request.resource.data.link.size() <= 200
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasOnly([
+          'userId', 'type', 'message', 'link', 'read', 'createdAt'
+        ]);
+
+      allow update: if isRecipient()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+
+      allow delete: if isRecipient();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* config/{docId}                                                      */
+    /* ------------------------------------------------------------------ */
+
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
