@@ -149,8 +149,11 @@ request-body limit, so the full 5 MB per photo works in production.
 
 ### Demo accounts
 
-The three accounts below were created in Firebase Auth and their emails marked
-verified; their `users/{uid}` documents carry the matching roles:
+The three accounts below exist in Firebase Auth. Their addresses have no real
+inbox, so rather than being verified they are **allowlisted** in
+`firestore.rules` (`isDemoAccount()`) and treated as verified: the demo logins
+can post reports, comments, claims, and notifications while every other account
+still has to verify its email. Their roles come from the `users/{uid}` documents.
 
 | Role | Email | Password |
 |---|---|---|
@@ -158,6 +161,10 @@ verified; their `users/{uid}` documents carry the matching roles:
 | Moderator | `moderator@findit.demo` | `FindIt123!` |
 | Member | `user@findit.demo` | `FindIt123!` |
 
+> The allowlist is a closed list of these exact addresses — `isDemoAccount()` in
+> `firestore.rules`, mirrored by `DEMO_ACCOUNT_EMAILS` in
+> `src/lib/constants.ts`. It is deliberately not a domain wildcard.
+>
 > These are *demo* credentials for the presentation only — they are not created
 > by code and not committed to any environment file.
 

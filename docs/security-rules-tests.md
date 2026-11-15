@@ -54,6 +54,7 @@ connectFirestoreEmulator(getFirebaseDb(), "127.0.0.1", 8080);
 | 16 | Read any report | moderator / admin | allow |
 | 17 | Create report with `status: "pending"` and verified email | member | allow |
 | 18 | Create report with unverified email | member | deny |
+| 18b | Create report with unverified email on the demo allowlist | `user@findit.demo` | allow |
 | 19 | Create report with `authorId` of someone else | member | deny |
 | 20 | Create report with `status: "approved"` | member | deny |
 | 21 | Create report with `status: "approved"` | moderator / admin | allow |

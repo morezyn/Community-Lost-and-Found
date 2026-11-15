@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { getFirebaseAuth, getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase/client";
 import { ensureUserProfile, logoutUser } from "@/lib/firebase/auth";
+import { isDemoAccountEmail } from "@/lib/constants";
 import type { AppUser } from "@/types";
 
 /** How often an unverified session re-checks Firebase Auth, in ms. */
@@ -64,8 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Refresh token claims so security rules see email_verified == true.
         await user.getIdToken(true);
       }
-      setEmailVerified(user.emailVerified);
-      return user.emailVerified;
+      // Demo accounts are allowlisted in firestore.rules and have no inbox.
+      const verified = user.emailVerified || isDemoAccountEmail(user.email);
+      setEmailVerified(verified);
+      return verified;
     } catch {
       // Offline or transient failure - keep the last known value.
       return false;
@@ -88,7 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
 
       setFirebaseUser(user);
-      setEmailVerified(user?.emailVerified ?? false);
+      setEmailVerified(
+        user ? user.emailVerified || isDemoAccountEmail(user.email) : false,
+      );
 
       if (!user) {
         setProfile(null);

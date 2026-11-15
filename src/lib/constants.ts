@@ -8,6 +8,23 @@ import type { ReportStatus, ReportType, Role, Category } from "@/types";
 export const REQUIRE_APPROVAL =
   process.env.NEXT_PUBLIC_REQUIRE_APPROVAL !== "false";
 
+/**
+ * Demo accounts used for the presentation. They have no real inbox, so
+ * firestore.rules treats them as verified via `isDemoAccount()`.
+ *
+ * Keep this list in sync with firestore.rules. It only affects UI copy (the
+ * "verify your email" banners); the rules remain the real gate.
+ */
+export const DEMO_ACCOUNT_EMAILS = [
+  "admin@findit.demo",
+  "moderator@findit.demo",
+  "user@findit.demo",
+] as const;
+
+export function isDemoAccountEmail(email: string | null | undefined): boolean {
+  return !!email && DEMO_ACCOUNT_EMAILS.some((demo) => demo === email.toLowerCase());
+}
+
 export const PAGE_SIZE = 9;
 
 export const MAX_IMAGES = 4;
