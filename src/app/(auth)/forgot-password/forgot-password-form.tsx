@@ -11,6 +11,7 @@ import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/validator
 import { describeFirebaseError } from "@/lib/firebase/errors";
 import { requestPasswordReset } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -66,9 +67,7 @@ export function ForgotPasswordForm() {
               aria-invalid={Boolean(errors.email)}
               {...register("email")}
             />
-            {errors.email && (
-              <p className="text-xs text-destructive">{errors.email.message}</p>
-            )}
+            <FieldError>{errors.email?.message}</FieldError>
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>

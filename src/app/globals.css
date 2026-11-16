@@ -168,6 +168,11 @@
 
   --max-width-content: 1200px;
   --max-width-wide: 1400px;
+
+  /* Motion tokens (ANIMATIONS.md) */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-in-soft: cubic-bezier(0.55, 0, 1, 0.45);
 }
 
 @layer base {
@@ -201,6 +206,18 @@
   ::selection {
     background-color: color-mix(in srgb, var(--accent-brand) 28%, transparent);
   }
+
+  /* Respect the user's OS-level motion preference everywhere (ANIMATIONS.md). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /* Soft page backdrop used on marketing/dashboard sections. */
@@ -227,3 +244,74 @@
     display: none;
   }
 }
+
+/* Motion durations (ANIMATIONS.md) */
+@utility duration-instant { transition-duration: 100ms; }
+@utility duration-fast { transition-duration: 150ms; }
+@utility duration-base { transition-duration: 250ms; }
+@utility duration-slow { transition-duration: 400ms; }
+@utility duration-reveal { transition-duration: 650ms; }
+
+/* Motion easings */
+@utility ease-out-soft { transition-timing-function: var(--ease-out-soft); }
+@utility ease-in-out-soft { transition-timing-function: var(--ease-in-out-soft); }
+@utility ease-in-soft { transition-timing-function: var(--ease-in-soft); }
+
+/* Skeleton shimmer helper */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface, #e6e1d3) 25%,
+    var(--card, #f7f5ef) 50%,
+    var(--surface, #e6e1d3) 75%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes scale-in {
+  0% { opacity: 0; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-down {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(242, 120, 75, 0.45); }
+  100% { box-shadow: 0 0 0 10px rgba(242, 120, 75, 0); }
+}
+@keyframes highlight-flash {
+  0% { background-color: rgba(242, 120, 75, 0.18); }
+  100% { background-color: transparent; }
+}
+@keyframes badge-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@utility animate-fade-up { animation: fade-up 650ms var(--ease-out-soft) both; }
+@utility animate-fade-in { animation: fade-in 400ms ease-out both; }
+@utility animate-scale-in { animation: scale-in 250ms var(--ease-out-soft) both; }
+@utility animate-slide-down { animation: slide-down 250ms var(--ease-out-soft) both; }
+@utility animate-shimmer { animation: shimmer 1.6s linear infinite; }
+@utility animate-pulse-ring { animation: pulse-ring 1.2s ease-out 1; }
+@utility animate-highlight-flash { animation: highlight-flash 1.8s ease-out 1; }
+@utility animate-badge-pop { animation: badge-pop 350ms var(--ease-out-soft) both; }
+@utility animate-float { animation: float 4s ease-in-out infinite; }

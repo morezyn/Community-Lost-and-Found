@@ -228,7 +228,7 @@ export function ReportDetail({ reportId }: { reportId: string }) {
   const typeMeta = REPORT_TYPE_META[report.type];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8">
+    <div className="mx-auto w-full max-w-6xl animate-fade-in px-4 py-8">
       <Link
         href="/reports"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"

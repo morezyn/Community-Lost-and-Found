@@ -44,7 +44,10 @@ export function ReportFiltersBar({
     (filters.dateTo ? 1 : 0);
 
   return (
-    <section className="rounded-xl border bg-card p-4 shadow-sm" aria-label="Report filters">
+    <section
+      className="rounded-card border border-border bg-card p-4"
+      aria-label="Report filters"
+    >
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative flex-1">

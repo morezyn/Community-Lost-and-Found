@@ -14,6 +14,7 @@ import { describeFirebaseError } from "@/lib/firebase/errors";
 import { ensureUserProfile, loginWithGoogle } from "@/lib/firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleButton } from "@/components/auth/GoogleButton";
@@ -84,9 +85,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             aria-invalid={Boolean(errors.email)}
             {...register("email")}
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
+          <FieldError>{errors.email?.message}</FieldError>
         </div>
 
         <div className="space-y-1.5">
@@ -117,9 +116,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
-          )}
+          <FieldError>{errors.password?.message}</FieldError>
         </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>

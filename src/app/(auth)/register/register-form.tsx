@@ -12,6 +12,7 @@ import { registerSchema, type RegisterValues } from "@/lib/validators";
 import { describeFirebaseError } from "@/lib/firebase/errors";
 import { loginWithGoogle, registerWithEmail } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -90,9 +91,7 @@ export function RegisterForm() {
             aria-invalid={Boolean(errors.displayName)}
             {...register("displayName")}
           />
-          {errors.displayName && (
-            <p className="text-xs text-destructive">{errors.displayName.message}</p>
-          )}
+          <FieldError>{errors.displayName?.message}</FieldError>
         </div>
 
         <div className="space-y-1.5">
@@ -105,9 +104,7 @@ export function RegisterForm() {
             aria-invalid={Boolean(errors.email)}
             {...register("email")}
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
+          <FieldError>{errors.email?.message}</FieldError>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -131,9 +128,7 @@ export function RegisterForm() {
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
-            {errors.password && (
-              <p className="text-xs text-destructive">{errors.password.message}</p>
-            )}
+            <FieldError>{errors.password?.message}</FieldError>
           </div>
 
           <div className="space-y-1.5">
@@ -145,9 +140,7 @@ export function RegisterForm() {
               aria-invalid={Boolean(errors.confirmPassword)}
               {...register("confirmPassword")}
             />
-            {errors.confirmPassword && (
-              <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-            )}
+            <FieldError>{errors.confirmPassword?.message}</FieldError>
           </div>
         </div>
 

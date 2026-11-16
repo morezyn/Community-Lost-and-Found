@@ -47,10 +47,19 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
 
   React.useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  // Fade in the border/backdrop once the page scrolls (ANIMATIONS.md 7.2).
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const displayName = profile?.displayName ?? firebaseUser?.displayName ?? "Member";
   const photoURL = profile?.photoURL ?? firebaseUser?.photoURL ?? null;
@@ -72,7 +81,14 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg/95 backdrop-blur-sm">
+    <header
+      className={cn(
+        "sticky top-0 z-40 border-b transition-all duration-base ease-out-soft",
+        scrolled
+          ? "border-border bg-bg/90 backdrop-blur-md"
+          : "border-transparent bg-bg/80 backdrop-blur-sm",
+      )}
+    >
       <div className="mx-auto flex h-16 w-full max-w-content items-center gap-2 px-6 sm:gap-4 lg:px-12">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight text-ink">
           <span className="flex size-8 items-center justify-center rounded-full bg-ink text-bg">

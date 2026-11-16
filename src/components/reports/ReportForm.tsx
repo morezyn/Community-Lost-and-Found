@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Check, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn, formatDate, fromDateInputValue, toDate, toDateInputValue } from "@/lib/utils";
@@ -15,6 +15,7 @@ import { subscribeToCategories } from "@/lib/firebase/categories";
 import { createReport, updateReport } from "@/lib/firebase/reports";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -309,16 +310,19 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
                   aria-checked={selected}
                   onClick={() => handleTypeChange(option)}
                   className={cn(
-                    "flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition",
-                    "focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none",
+                    "flex flex-col items-start gap-1 rounded-card border p-3 text-left transition-all duration-base ease-out-soft",
+                    "focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none",
                     selected
-                      ? cn("bg-card shadow-sm ring-2", meta.ringClass, "border-transparent")
+                      ? cn("scale-[1.02] bg-card ring-2", meta.ringClass, "border-transparent")
                       : "border-border bg-card/60 hover:bg-card",
                   )}
                 >
-                  <span className="flex items-center gap-2 text-sm font-semibold">
+                  <span className="flex w-full items-center gap-2 text-sm font-semibold">
                     <span className={cn("size-2 rounded-full", meta.dotClass)} />
                     {meta.label}
+                    {selected && (
+                      <Check className="animate-badge-pop ml-auto size-4" aria-hidden="true" />
+                    )}
                   </span>
                   <span className="text-xs text-muted-foreground">{meta.description}</span>
                 </button>
@@ -353,7 +357,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
             aria-invalid={Boolean(errors.title)}
             {...register("title")}
           />
-          {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+          <FieldError>{errors.title?.message}</FieldError>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -381,12 +385,8 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
                   ))}
                 </SelectContent>
               </Select>
-              {errors.categoryId && (
-                <p className="text-xs text-destructive">{errors.categoryId.message}</p>
-              )}
-              {categoriesError && (
-                <p className="text-xs text-destructive">{categoriesError}</p>
-              )}
+              <FieldError>{errors.categoryId?.message}</FieldError>
+              <FieldError>{categoriesError}</FieldError>
               {!categoriesLoading && allCategories.length === 0 && (
                 <p className="text-xs text-muted-foreground">
                   No categories yet — an admin needs to seed them from the admin dashboard.
@@ -407,9 +407,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
               aria-invalid={Boolean(errors.eventDate)}
               {...register("eventDate")}
             />
-            {errors.eventDate && (
-              <p className="text-xs text-destructive">{errors.eventDate.message}</p>
-            )}
+            <FieldError>{errors.eventDate?.message}</FieldError>
           </div>
         </div>
 
@@ -436,7 +434,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
           />
           <div className="flex items-center justify-between gap-2">
             {errors.description ? (
-              <p className="text-xs text-destructive">{errors.description.message}</p>
+              <FieldError>{errors.description.message}</FieldError>
             ) : (
               <span />
             )}
@@ -461,9 +459,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
             aria-invalid={Boolean(errors.locationText)}
             {...register("locationText")}
           />
-          {errors.locationText && (
-            <p className="text-xs text-destructive">{errors.locationText.message}</p>
-          )}
+          <FieldError>{errors.locationText?.message}</FieldError>
         </div>
       </section>
 
@@ -481,7 +477,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
           }}
           disabled={isSubmitting}
         />
-        {imageError && <p className="text-xs text-destructive">{imageError}</p>}
+        {imageError && <FieldError>{imageError}</FieldError>}
       </section>
 
       {type === "found" && (
@@ -502,11 +498,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
               aria-invalid={Boolean(errors.verificationQuestion)}
               {...register("verificationQuestion")}
             />
-            {errors.verificationQuestion && (
-              <p className="text-xs text-destructive">
-                {errors.verificationQuestion.message}
-              </p>
-            )}
+            <FieldError>{errors.verificationQuestion?.message}</FieldError>
           </div>
 
           <div className="space-y-1.5">
@@ -517,11 +509,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
               aria-invalid={Boolean(errors.verificationAnswer)}
               {...register("verificationAnswer")}
             />
-            {errors.verificationAnswer && (
-              <p className="text-xs text-destructive">
-                {errors.verificationAnswer.message}
-              </p>
-            )}
+            <FieldError>{errors.verificationAnswer?.message}</FieldError>
             {question.length > 0 && !errors.verificationAnswer && (
               <button
                 type="button"

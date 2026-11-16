@@ -39,6 +39,7 @@ export function ImagePicker({
   disabled,
 }: ImagePickerProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = React.useState(false);
   const visibleExisting = existingImages.filter(
     (image) => !removedPaths.includes(image.path),
   );
@@ -70,6 +71,20 @@ export function ImagePicker({
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    if (disabled || atLimit) return;
+    if (!event.dataTransfer.types.includes("Files")) return;
+    event.preventDefault();
+    setDragging(true);
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (disabled || atLimit) return;
+    event.preventDefault();
+    setDragging(false);
+    handleFiles(event.dataTransfer.files);
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -79,18 +94,27 @@ export function ImagePicker({
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div
+        className={cn(
+          "grid grid-cols-2 gap-3 rounded-[14px] transition-colors duration-fast ease-out-soft sm:grid-cols-4",
+          dragging && "bg-accent-soft/50 ring-2 ring-accent-brand/40",
+        )}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragOver}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
         {visibleExisting.map((image) => (
           <div
             key={image.path}
-            className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+            className="group animate-scale-in relative aspect-square overflow-hidden rounded-lg border bg-muted"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={image.url} alt="Current report photo" className="size-full object-cover" />
             <button
               type="button"
               onClick={() => onToggleRemoveExisting?.(image.path)}
-              className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-90 transition hover:bg-destructive"
+              className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-90 transition-colors duration-fast ease-out-soft hover:bg-destructive"
               aria-label="Remove photo"
             >
               <Trash2 className="size-3.5" />
@@ -117,14 +141,14 @@ export function ImagePicker({
         {newImages.map((image, index) => (
           <div
             key={image.previewUrl}
-            className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+            className="group animate-scale-in relative aspect-square overflow-hidden rounded-lg border bg-muted"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={image.previewUrl} alt="Selected photo preview" className="size-full object-cover" />
             <button
               type="button"
               onClick={() => onRemoveNew(index)}
-              className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-destructive"
+              className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white transition-colors duration-fast ease-out-soft hover:bg-destructive"
               aria-label="Remove selected photo"
             >
               <Trash2 className="size-3.5" />
@@ -138,13 +162,19 @@ export function ImagePicker({
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
             className={cn(
-              "flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed bg-muted/30 text-muted-foreground transition",
+              "flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed bg-muted/30 text-muted-foreground transition-colors duration-fast ease-out-soft",
               "hover:border-primary/60 hover:bg-primary/5 hover:text-primary",
-              "focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none",
+              "focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none",
+              dragging && "border-accent-brand bg-accent-soft/60 text-accent-brand",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           >
-            <ImagePlus className="size-5" />
+            <ImagePlus
+              className={cn(
+                "size-5 transition-transform duration-fast ease-out-soft",
+                dragging && "scale-110",
+              )}
+            />
             <span className="px-2 text-center text-[11px] font-medium">Add photo</span>
           </button>
         )}

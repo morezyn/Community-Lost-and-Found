@@ -38,14 +38,15 @@ export function ReportGallery({ images, title }: ReportGalleryProps) {
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="block w-full overflow-hidden rounded-xl border bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none"
+        className="block w-full overflow-hidden rounded-card border border-border bg-surface transition-all duration-base ease-out-soft focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none"
         aria-label="Open photo full screen"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          key={active}
           src={active}
           alt={`${title} — photo ${activeIndex + 1} of ${images.length}`}
-          className="max-h-[520px] w-full object-contain"
+          className="animate-fade-in max-h-[520px] w-full object-contain"
         />
       </button>
 
@@ -57,7 +58,7 @@ export function ReportGallery({ images, title }: ReportGalleryProps) {
               type="button"
               onClick={() => setActiveIndex(index)}
               className={cn(
-                "aspect-square overflow-hidden rounded-lg border-2 bg-muted transition-opacity",
+                "aspect-square overflow-hidden rounded-lg border-2 bg-muted transition-opacity duration-fast ease-out-soft",
                 index === activeIndex
                   ? "border-primary"
                   : "border-transparent opacity-70 hover:opacity-100",
@@ -88,7 +89,7 @@ export function ReportGallery({ images, title }: ReportGalleryProps) {
             <img
               src={active}
               alt={`${title} — photo ${activeIndex + 1} of ${images.length}`}
-              className="max-h-[80dvh] w-full rounded-xl object-contain"
+              className="max-h-[80dvh] w-full rounded-card object-contain"
             />
             <Button
               variant="secondary"

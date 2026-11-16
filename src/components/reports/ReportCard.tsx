@@ -21,22 +21,22 @@ export function ReportCard({ report, showStatus = false, className }: ReportCard
     <Link
       href={`/reports/${report.id}`}
       className={cn(
-        "group flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none",
+        "group flex flex-col overflow-hidden rounded-card border border-border bg-card shadow-none transition-all duration-slow ease-out-soft hover:-translate-y-1 hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none",
         className,
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={report.title}
             loading="lazy"
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="size-full object-cover transition-transform duration-slow ease-out-soft group-hover:scale-[1.05]"
           />
         ) : (
           <div className="flex size-full items-center justify-center">
-            <span className="text-xs text-muted-foreground">No photo</span>
+            <span className="text-xs text-ink-faint">No photo</span>
           </div>
         )}
         <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
@@ -56,7 +56,7 @@ export function ReportCard({ report, showStatus = false, className }: ReportCard
           <span>{formatDate(report.eventDate)}</span>
         </div>
 
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-primary">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors duration-fast ease-out-soft group-hover:text-primary">
           {report.title}
         </h3>
         <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
@@ -82,16 +82,16 @@ export function ReportCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm",
+        "flex flex-col overflow-hidden rounded-card border border-border bg-card",
         className,
       )}
     >
-      <div className="aspect-[4/3] w-full animate-pulse bg-muted" />
+      <div className="skeleton aspect-[4/3] w-full animate-shimmer" />
       <div className="space-y-3 p-4">
-        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
-        <div className="h-3 w-full animate-pulse rounded bg-muted" />
-        <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+        <div className="skeleton h-3 w-24 animate-shimmer rounded-full" />
+        <div className="skeleton h-4 w-4/5 animate-shimmer rounded-full" />
+        <div className="skeleton h-3 w-full animate-shimmer rounded-full" />
+        <div className="skeleton h-3 w-2/3 animate-shimmer rounded-full" />
       </div>
     </div>
   );

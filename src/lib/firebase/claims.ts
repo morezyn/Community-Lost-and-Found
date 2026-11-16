@@ -181,8 +181,11 @@ export interface ReviewClaimInput {
 }
 
 /**
- * Approves or rejects a claim. Approving also resolves the report and rejects
- * the remaining pending claims in a single atomic batch.
+ * Approves or rejects a claim. Approving also resolves the report.
+ *
+ * Other pending claims for the same report are rejected as a best-effort
+ * follow-up (not in the critical batch) so one inconsistent sibling claim cannot
+ * block the owner's approval.
  */
 export async function reviewClaim({
   claim,
@@ -190,6 +193,10 @@ export async function reviewClaim({
   reviewer,
   reviewNote,
 }: ReviewClaimInput): Promise<void> {
+  if (claim.status !== "pending") {
+    throw new Error("This submission has already been reviewed.");
+  }
+
   const db = getFirebaseDb();
   const batch = writeBatch(db);
 
@@ -206,26 +213,37 @@ export async function reviewClaim({
       resolvedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-
-    const others = await getDocs(
-      query(
-        collection(db, CLAIMS),
-        where("reportId", "==", claim.reportId),
-        where("status", "==", "pending"),
-      ),
-    );
-    others.docs.forEach((item) => {
-      if (item.id === claim.id) return;
-      batch.update(item.ref, {
-        status: "rejected",
-        reviewedBy: reviewer.uid,
-        reviewNote: "Another response was approved for this item.",
-        reviewedAt: serverTimestamp(),
-      });
-    });
   }
 
   await batch.commit();
+
+  if (decision === "approved") {
+    try {
+      const others = await getDocs(
+        query(
+          collection(db, CLAIMS),
+          where("reportId", "==", claim.reportId),
+          where("status", "==", "pending"),
+        ),
+      );
+
+      await Promise.allSettled(
+        others.docs
+          .filter((item) => item.id !== claim.id)
+          .map((item) =>
+            updateDoc(item.ref, {
+              status: "rejected",
+              reviewedBy: reviewer.uid,
+              reviewNote: "Another response was approved for this item.",
+              reviewedAt: serverTimestamp(),
+            }),
+          ),
+      );
+    } catch (error) {
+      // Best effort: the approval itself already committed.
+      console.warn("Failed to reject other pending claims after approval", error);
+    }
+  }
 
   try {
     await createNotification({

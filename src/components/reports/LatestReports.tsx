@@ -6,6 +6,7 @@ import { Inbox, Loader2 } from "lucide-react";
 
 import { fetchLatestReports } from "@/lib/firebase/reports";
 import { describeFirebaseError } from "@/lib/firebase/errors";
+import { Reveal, StaggerGroup } from "@/components/motion/Reveal";
 import { ReportCard, ReportCardSkeleton } from "@/components/reports/ReportCard";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -69,11 +70,13 @@ export function LatestReports() {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <StaggerGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {reports.map((report) => (
-        <ReportCard key={report.id} report={report} />
+        <Reveal key={report.id} className="h-full">
+          <ReportCard report={report} className="h-full" />
+        </Reveal>
       ))}
-    </div>
+    </StaggerGroup>
   );
 }
 

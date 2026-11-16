@@ -6,7 +6,9 @@ import { AlertCircle, Inbox, Loader2, PlusCircle, RotateCcw } from "lucide-react
 
 import { useReports } from "@/hooks/useReports";
 import { subscribeToCategories } from "@/lib/firebase/categories";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Reveal, StaggerGroup } from "@/components/motion/Reveal";
 import { ReportFiltersBar } from "@/components/reports/ReportFilters";
 import { ReportCard, ReportCardSkeleton } from "@/components/reports/ReportCard";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -111,11 +113,18 @@ export function ReportsBrowser() {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerGroup
+          className={cn(
+            "grid gap-4 transition-opacity duration-base ease-out-soft sm:grid-cols-2 lg:grid-cols-3",
+            loadingMore && "opacity-60",
+          )}
+        >
           {reports.map((report) => (
-            <ReportCard key={report.id} report={report} />
+            <Reveal key={report.id} className="h-full">
+              <ReportCard report={report} className="h-full" />
+            </Reveal>
           ))}
-        </div>
+        </StaggerGroup>
       )}
 
       {!loading && reports.length > 0 && (

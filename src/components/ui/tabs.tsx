@@ -11,17 +11,75 @@ function Tabs(props: React.ComponentProps<typeof TabsPrimitive.Root>) {
 
 function TabsList({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List>) {
+  const listRef = React.useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = React.useState({ left: 0, width: 0, visible: false });
+
+  React.useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+
+    const measure = () => {
+      const active = list.querySelector<HTMLElement>('[data-state="active"]');
+      if (!active) {
+        setIndicator((previous) => (previous.visible ? { ...previous, visible: false } : previous));
+        return;
+      }
+      const listRect = list.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      setIndicator({
+        left: activeRect.left - listRect.left + list.scrollLeft,
+        width: activeRect.width,
+        visible: true,
+      });
+    };
+
+    measure();
+
+    // Radix flips `data-state` on the triggers, so observe attribute changes
+    // instead of requiring callers to pass `value` down to this component.
+    const observer = new MutationObserver(measure);
+    observer.observe(list, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-state"],
+    });
+
+    // Keep the pill aligned when the list resizes (responsive/flex-wrap).
+    const resize = new ResizeObserver(measure);
+    resize.observe(list);
+
+    return () => {
+      observer.disconnect();
+      resize.disconnect();
+    };
+  }, []);
+
   return (
     <TabsPrimitive.List
+      ref={listRef}
       data-slot="tabs-list"
       className={cn(
-        "inline-flex h-auto w-fit max-w-full items-center justify-start gap-1 overflow-x-auto rounded-full bg-surface p-1 text-ink-soft no-scrollbar",
+        "relative inline-flex h-auto w-fit max-w-full items-center justify-start gap-1 overflow-x-auto rounded-full bg-surface p-1 text-ink-soft no-scrollbar",
         className,
       )}
       {...props}
-    />
+    >
+      {/* Sliding active pill (ANIMATIONS.md 7.5). Position is measured after mount. */}
+      <span
+        aria-hidden="true"
+        data-slot="tabs-indicator"
+        className="pointer-events-none absolute inset-y-1 left-0 rounded-full bg-card shadow-sm ring-1 ring-border/60 transition-[transform,width,opacity] duration-base ease-in-out-soft"
+        style={{
+          width: indicator.width,
+          transform: `translateX(${indicator.left}px)`,
+          opacity: indicator.visible ? 1 : 0,
+        }}
+      />
+      {children}
+    </TabsPrimitive.List>
   );
 }
 
@@ -33,10 +91,10 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "inline-flex flex-none items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ease-out",
+        "relative inline-flex flex-none items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-fast ease-out-soft",
         "text-ink-soft hover:text-ink",
         "focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none",
-        "data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border/60",
+        "data-[state=active]:text-ink",
         "disabled:pointer-events-none disabled:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
@@ -53,7 +111,7 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 outline-none", className)}
+      className={cn("flex-1 outline-none data-[state=active]:animate-fade-in", className)}
       {...props}
     />
   );
