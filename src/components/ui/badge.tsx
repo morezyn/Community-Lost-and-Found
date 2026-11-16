@@ -5,15 +5,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset transition-colors [&>svg]:pointer-events-none [&>svg]:size-3",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-inset transition-colors [&>svg]:pointer-events-none [&>svg]:size-3",
   {
     variants: {
       variant: {
-        default: "bg-primary/10 text-primary ring-primary/20",
-        secondary: "bg-secondary text-secondary-foreground ring-border",
-        outline: "bg-transparent text-foreground ring-border",
-        destructive:
-          "bg-destructive/10 text-destructive ring-destructive/20",
+        default: "bg-accent-soft text-accent-brand ring-accent-brand/20",
+        secondary: "bg-surface text-ink ring-border",
+        outline: "bg-transparent text-ink ring-border",
+        destructive: "bg-[#F6DDD6] text-danger ring-danger/20",
+        success: "bg-[#DCEBDD] text-success ring-success/20",
+        warning: "bg-[#F5E6C4] text-[#9A6B12] ring-warning/30",
+        info: "bg-[#DCE8F1] text-info ring-info/20",
       },
     },
     defaultVariants: {

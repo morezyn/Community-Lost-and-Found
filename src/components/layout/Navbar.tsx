@@ -72,13 +72,13 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4 sm:gap-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-fuchsia-500 text-primary-foreground shadow-sm">
+    <header className="sticky top-0 z-40 border-b border-border bg-bg/95 backdrop-blur-sm">
+      <div className="mx-auto flex h-16 w-full max-w-content items-center gap-2 px-6 sm:gap-4 lg:px-12">
+        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight text-ink">
+          <span className="flex size-8 items-center justify-center rounded-full bg-ink text-bg">
             <Search className="size-4" strokeWidth={2.5} />
           </span>
-          <span className="text-base">{APP_NAME}</span>
+          <span className="text-base font-heading">{APP_NAME}</span>
         </Link>
 
         <nav className="ml-4 hidden items-center gap-1 md:flex">
@@ -91,8 +91,8 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-                  active && "bg-accent text-foreground",
+                  "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink",
+                  active && "bg-surface text-ink",
                 )}
               >
                 <link.icon className="size-4" />
@@ -162,12 +162,12 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Sign in</Link>
+            <div className="flex items-center gap-2">
+              <Button variant="soft" size="sm" asChild>
+                <Link href="/login">Login</Link>
               </Button>
               <Button size="sm" asChild className="hidden sm:inline-flex">
-                <Link href="/register">Get started</Link>
+                <Link href="/reports/new">Report an item</Link>
               </Button>
             </div>
           )}
@@ -186,25 +186,33 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t bg-background px-4 py-3 md:hidden">
+        <div className="border-t border-border bg-bg px-6 py-4 md:hidden">
           <nav className="flex flex-col gap-1">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium text-ink-soft hover:bg-surface hover:text-ink"
               >
                 <link.icon className="size-4" />
                 {link.label}
               </Link>
             ))}
             {!isSignedIn && (
-              <Link
-                href="/login"
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                <UserIcon className="size-4" /> Sign in
-              </Link>
+              <>
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium text-ink-soft hover:bg-surface hover:text-ink"
+                >
+                  <UserIcon className="size-4" /> Login
+                </Link>
+                <Link
+                  href="/reports/new"
+                  className="mt-1 flex items-center justify-center rounded-full bg-accent-brand px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover"
+                >
+                  Report an item
+                </Link>
+              </>
             )}
           </nav>
         </div>

@@ -51,23 +51,23 @@ export const REPORT_TYPE_META: Record<ReportType, TypeMeta> = {
   lost: {
     label: "Lost",
     description: "I lost something and I'm hoping to get it back.",
-    badgeClass: "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30",
-    dotClass: "bg-rose-500",
-    ringClass: "ring-rose-200 dark:ring-rose-500/30",
+    badgeClass: "bg-[#F6DDD6] text-danger ring-danger/20",
+    dotClass: "bg-danger",
+    ringClass: "ring-danger/20",
   },
   found: {
     label: "Found",
     description: "I found something and want to return it to its owner.",
-    badgeClass: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30",
-    dotClass: "bg-emerald-500",
-    ringClass: "ring-emerald-200 dark:ring-emerald-500/30",
+    badgeClass: "bg-[#DCEBDD] text-success ring-success/20",
+    dotClass: "bg-success",
+    ringClass: "ring-success/20",
   },
   incident: {
     label: "Incident",
     description: "Report a community concern: hazard, damage, or safety issue.",
-    badgeClass: "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30",
-    dotClass: "bg-amber-500",
-    ringClass: "ring-amber-200 dark:ring-amber-500/30",
+    badgeClass: "bg-[#F5E6C4] text-[#9A6B12] ring-warning/30",
+    dotClass: "bg-warning",
+    ringClass: "ring-warning/30",
   },
 };
 
@@ -79,34 +79,34 @@ interface StatusMeta {
 export const REPORT_STATUS_META: Record<ReportStatus, StatusMeta> = {
   pending: {
     label: "Pending review",
-    badgeClass: "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-500/30",
+    badgeClass: "bg-[#F5E6C4] text-[#9A6B12] ring-warning/30",
   },
   approved: {
     label: "Approved",
-    badgeClass: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30",
+    badgeClass: "bg-[#DCEBDD] text-success ring-success/20",
   },
   rejected: {
     label: "Rejected",
-    badgeClass: "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30",
+    badgeClass: "bg-[#F6DDD6] text-danger ring-danger/20",
   },
   resolved: {
     label: "Resolved",
-    badgeClass: "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/30",
+    badgeClass: "bg-ink text-bg ring-ink/20",
   },
 };
 
 export const CATEGORY_REQUEST_STATUS_META: Record<CategoryRequestStatus, StatusMeta> = {
   pending: {
     label: "Waiting for admin",
-    badgeClass: "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-500/30",
+    badgeClass: "bg-[#F5E6C4] text-[#9A6B12] ring-warning/30",
   },
   approved: {
     label: "Approved",
-    badgeClass: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30",
+    badgeClass: "bg-[#DCEBDD] text-success ring-success/20",
   },
   rejected: {
     label: "Rejected",
-    badgeClass: "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30",
+    badgeClass: "bg-[#F6DDD6] text-danger ring-danger/20",
   },
 };
 

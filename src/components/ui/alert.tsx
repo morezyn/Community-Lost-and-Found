@@ -4,18 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative grid w-full items-start gap-x-3 gap-y-1 rounded-lg border px-4 py-3 text-sm [&>svg]:size-4 [&>svg]:translate-y-0.5",
+  "relative grid w-full items-start gap-x-3 gap-y-1 rounded-[14px] border px-4 py-3 text-sm [&>svg]:size-4 [&>svg]:translate-y-0.5",
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
-        info: "border-primary/25 bg-primary/5 text-foreground [&>svg]:text-primary",
+        default: "bg-card text-ink border-border",
+        info: "border-info/30 bg-[#DCE8F1] text-ink [&>svg]:text-info",
         warning:
-          "border-amber-300/60 bg-amber-50 text-amber-900 [&>svg]:text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200",
+          "border-warning/30 bg-[#F5E6C4] text-[#7A5510] [&>svg]:text-[#9A6B12]",
         destructive:
-          "border-destructive/30 bg-destructive/5 text-destructive [&>svg]:text-destructive",
+          "border-danger/30 bg-[#F6DDD6] text-[#7A3327] [&>svg]:text-danger",
         success:
-          "border-emerald-300/60 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200",
+          "border-success/30 bg-[#DCEBDD] text-[#2F5A37] [&>svg]:text-success",
       },
     },
     defaultVariants: { variant: "default" },
