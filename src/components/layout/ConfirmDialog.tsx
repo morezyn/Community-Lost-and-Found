@@ -52,7 +52,7 @@ export function ConfirmDialog({
             onClick={() => void onConfirm()}
             disabled={loading}
           >
-            {loading && <Loader2 className="animate-spin" />}
+            {loading && <Loader2 className="motion-essential animate-spin" />}
             {confirmLabel}
           </Button>
         </DialogFooter>

@@ -151,7 +151,7 @@ export function CommentList({
             <li
               key={comment.id}
               className={cn(
-                "grid transition-[grid-template-rows,opacity] duration-base ease-out-soft",
+                "grid lg:transition-[grid-template-rows,opacity] lg:duration-base lg:ease-out-soft",
                 exiting ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
               )}
             >
@@ -159,7 +159,7 @@ export function CommentList({
                 <div
                   className={cn(
                     "flex gap-3 rounded-lg",
-                    isFresh && "animate-fresh",
+                    isFresh && "lg:animate-fresh",
                   )}
                 >
                   <Avatar className="mt-0.5 size-8">

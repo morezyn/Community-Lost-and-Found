@@ -37,12 +37,12 @@ export function AnnouncementBanner() {
   return (
     <div
       className={cn(
-        "grid overflow-hidden transition-[grid-template-rows,opacity] duration-base ease-out-soft",
+        "grid overflow-hidden lg:transition-[grid-template-rows,opacity] lg:duration-base lg:ease-out-soft",
         closing ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
       )}
     >
       <div className="overflow-hidden">
-        <div className="animate-slide-down w-full bg-accent-brand text-white">
+        <div className="lg:animate-slide-down w-full bg-accent-brand text-white">
           <div className="mx-auto flex max-w-wide items-center justify-center gap-3 px-4 py-2 text-center text-[13px]">
             <p className="leading-snug">
               New: help your community reunite faster.{" "}
@@ -59,7 +59,7 @@ export function AnnouncementBanner() {
               type="button"
               onClick={dismiss}
               aria-label="Dismiss announcement"
-              className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-white/90 transition-colors duration-fast ease-out-soft hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-white/90 lg:transition-colors lg:duration-fast lg:ease-out-soft hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               <X className="size-3.5" />
             </button>

@@ -72,7 +72,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-content px-6 py-16 text-center sm:py-24 lg:px-12">
           {/* Hero load sequence: each block fades up in order (ANIMATIONS.md 7.3). */}
-          <div className="animate-fade-up">
+          <div className="lg:animate-fade-up">
             <Badge className="mx-auto gap-1.5">
               <Sparkles className="size-3.5" />
               Community powered
@@ -80,14 +80,14 @@ export default function HomePage() {
           </div>
 
           <h1
-            className="animate-fade-up mx-auto mt-5 max-w-3xl font-heading text-4xl font-semibold tracking-tight text-balance text-ink sm:text-6xl"
+            className="lg:animate-fade-up mx-auto mt-5 max-w-3xl font-heading text-4xl font-semibold tracking-tight text-balance text-ink sm:text-6xl"
             style={{ animationDelay: "100ms" }}
           >
             Lost something?{" "}
             <span className="text-accent-brand">Found something?</span>
           </h1>
           <p
-            className="animate-fade-up mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ink-soft sm:text-base"
+            className="lg:animate-fade-up mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ink-soft sm:text-base"
             style={{ animationDelay: "200ms" }}
           >
             {APP_NAME} connects neighbours, students, and staff so lost belongings find
@@ -96,7 +96,7 @@ export default function HomePage() {
           </p>
 
           <div
-            className="animate-fade-up mt-8 flex flex-wrap items-center justify-center gap-3"
+            className="lg:animate-fade-up mt-8 flex flex-wrap items-center justify-center gap-3"
             style={{ animationDelay: "300ms" }}
           >
             <Button size="lg" asChild>

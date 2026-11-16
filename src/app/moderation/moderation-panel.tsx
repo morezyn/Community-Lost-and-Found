@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { FadeImage } from "@/components/ui/fade-image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -151,7 +152,7 @@ export function ModerationPanel() {
                 <div
                   key={report.id}
                   className={cn(
-                    "grid transition-[grid-template-rows,opacity] duration-base ease-out-soft",
+                    "grid lg:transition-[grid-template-rows,opacity] lg:duration-base lg:ease-out-soft",
                     exiting ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
                   )}
                 >
@@ -161,8 +162,7 @@ export function ModerationPanel() {
                     >
                       <div className="h-20 w-full shrink-0 overflow-hidden rounded-lg bg-muted sm:w-28">
                         {report.images[0] ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <FadeImage
                             src={report.images[0]}
                             alt=""
                             className="size-full object-cover"
@@ -203,7 +203,7 @@ export function ModerationPanel() {
                           onClick={() => setApproveTarget(report)}
                           disabled={busyId === report.id}
                         >
-                          {busyId === report.id ? <Loader2 className="animate-spin" /> : <Check />}
+                          {busyId === report.id ? <Loader2 className="motion-essential animate-spin" /> : <Check />}
                           Approve
                         </Button>
                         <Button
@@ -239,7 +239,7 @@ export function ModerationPanel() {
               <div
                 key={claim.id}
                 className={cn(
-                  "grid transition-[grid-template-rows,opacity] duration-base ease-out-soft",
+                  "grid lg:transition-[grid-template-rows,opacity] lg:duration-base lg:ease-out-soft",
                   exiting ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
                 )}
               >
@@ -269,7 +269,7 @@ export function ModerationPanel() {
               <article
                 key={comment.id}
                 className={cn(
-                  "grid transition-[grid-template-rows,opacity] duration-base ease-out-soft",
+                  "grid lg:transition-[grid-template-rows,opacity] lg:duration-base lg:ease-out-soft",
                   exiting ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
                 )}
               >
@@ -336,7 +336,7 @@ export function ModerationPanel() {
               onClick={() => void handleReject()}
               disabled={busyId !== null}
             >
-              {busyId ? <Loader2 className="animate-spin" /> : <X />}
+              {busyId ? <Loader2 className="motion-essential animate-spin" /> : <X />}
               Reject report
             </Button>
           </DialogFooter>
@@ -351,7 +351,7 @@ function CountBadge({ count }: { count: number }) {
   return (
     <span
       key={count}
-      className="ml-1 animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground"
+      className="ml-1 lg:animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground"
     >
       {count}
     </span>

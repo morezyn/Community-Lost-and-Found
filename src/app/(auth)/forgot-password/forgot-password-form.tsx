@@ -71,7 +71,7 @@ export function ForgotPasswordForm() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="animate-spin" />}
+            {isSubmitting && <Loader2 className="motion-essential animate-spin" />}
             Send reset link
           </Button>
         </form>

@@ -204,7 +204,7 @@ export function AdminCategories() {
         actions={
           <>
             <Button variant="outline" size="sm" onClick={() => void handleSeed()} disabled={seeding}>
-              {seeding ? <Loader2 className="animate-spin" /> : <Sparkles />}
+              {seeding ? <Loader2 className="motion-essential animate-spin" /> : <Sparkles />}
               Seed defaults
             </Button>
             <Button size="sm" onClick={openCreate}>
@@ -250,7 +250,7 @@ export function AdminCategories() {
                   onClick={() => void handleApproveRequest(request)}
                   disabled={busyId === request.id}
                 >
-                  {busyId === request.id ? <Loader2 className="animate-spin" /> : <Check />}
+                  {busyId === request.id ? <Loader2 className="motion-essential animate-spin" /> : <Check />}
                   Approve
                 </Button>
                 <Button
@@ -381,7 +381,7 @@ export function AdminCategories() {
                         form.setValue("appliesTo", next, { shouldValidate: true });
                       }}
                       className={cn(
-                        "rounded-lg border px-3 py-1.5 text-xs font-medium transition",
+                        "rounded-lg border px-3 py-1.5 text-xs font-medium lg:transition",
                         selected
                           ? "border-primary bg-primary/10 text-primary"
                           : "text-muted-foreground hover:bg-accent",
@@ -419,7 +419,7 @@ export function AdminCategories() {
                 Cancel
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
+                {form.formState.isSubmitting && <Loader2 className="motion-essential animate-spin" />}
                 {editing ? "Save changes" : "Create category"}
               </Button>
             </DialogFooter>
@@ -456,7 +456,7 @@ export function AdminCategories() {
               onClick={() => void handleRejectRequest()}
               disabled={busyId !== null}
             >
-              {busyId ? <Loader2 className="animate-spin" /> : <X />}
+              {busyId ? <Loader2 className="motion-essential animate-spin" /> : <X />}
               Reject request
             </Button>
           </DialogFooter>

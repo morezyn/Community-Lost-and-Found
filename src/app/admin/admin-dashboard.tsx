@@ -133,13 +133,13 @@ export function AdminDashboard() {
         actions={
           <>
             <Button variant="outline" size="sm" onClick={() => void loadReports()} disabled={loading}>
-              <RefreshCw className={loading ? "animate-spin" : undefined} /> Refresh
+              <RefreshCw className={loading ? "motion-essential animate-spin" : undefined} /> Refresh
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href="/moderation">
                 <Shield /> Moderation
                 {stats.pending > 0 && (
-                  <span className="ml-1 animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                  <span className="ml-1 lg:animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
                     {stats.pending}
                   </span>
                 )}
@@ -208,7 +208,7 @@ export function AdminDashboard() {
           return (
             <div
               key={type}
-              className="flex animate-fade-up items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm"
+              className="flex lg:animate-fade-up items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm"
               style={{ animationDelay: `${240 + index * 60}ms` }}
             >
               <span className="flex items-center gap-2 text-sm font-medium">
@@ -311,14 +311,14 @@ export function AdminDashboard() {
             onClick={() => void handleSeedCategories()}
             disabled={seeding !== null}
           >
-            {seeding === "categories" ? <Loader2 className="animate-spin" /> : <FolderTree />}
+            {seeding === "categories" ? <Loader2 className="motion-essential animate-spin" /> : <FolderTree />}
             Seed default categories
           </Button>
           <Button
             onClick={() => setDemoConfirmOpen(true)}
             disabled={seeding !== null}
           >
-            {seeding === "demo" ? <Loader2 className="animate-spin" /> : <Sparkles />}
+            {seeding === "demo" ? <Loader2 className="motion-essential animate-spin" /> : <Sparkles />}
             Seed demo reports
           </Button>
         </CardContent>
@@ -352,7 +352,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="animate-fade-up rounded-xl border bg-card p-4 shadow-sm"
+      className="lg:animate-fade-up rounded-xl border bg-card p-4 shadow-sm"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center justify-between">

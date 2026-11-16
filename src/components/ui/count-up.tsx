@@ -1,12 +1,18 @@
 "use client";
 
 import * as React from "react";
+import { MOTION_QUERY, useMotionEnabled } from "@/hooks/useMotionEnabled";
+
+// useLayoutEffect on the client lets us set the starting value before the first
+// paint; on the server it falls back to useEffect (which is a no-op there).
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
 
 /**
- * Counts a number up from its previous value when it changes.
+ * Counts a number up from its previous value when it changes (ANIMATIONS.md 6.4).
  *
- * Used by dashboard stats (ANIMATIONS.md Phase 7). Skips the animation when the
- * user prefers reduced motion so values appear instantly.
+ * Motion is desktop-only: on phones/tablets and for reduced motion the final
+ * value is shown immediately with no animation.
  */
 export function CountUp({
   value,
@@ -17,15 +23,18 @@ export function CountUp({
   duration?: number;
   className?: string;
 }) {
+  const motionEnabled = useMotionEnabled();
   const [display, setDisplay] = React.useState(0);
   const displayedRef = React.useRef(0);
   const frameRef = React.useRef<number | null>(null);
 
-  React.useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  useIsomorphicLayoutEffect(() => {
+    // Check synchronously so the first mobile paint already has the final value.
+    const enabled =
+      typeof window !== "undefined" && window.matchMedia(MOTION_QUERY).matches;
     const from = displayedRef.current;
 
-    if (reduced || from === value) {
+    if (!enabled || from === value) {
       displayedRef.current = value;
       setDisplay(value);
       return;
@@ -47,7 +56,8 @@ export function CountUp({
     return () => {
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     };
-  }, [value, duration]);
+    // motionEnabled re-runs this when the viewport crosses 1024px.
+  }, [value, duration, motionEnabled]);
 
   return <span className={className}>{display}</span>;
 }

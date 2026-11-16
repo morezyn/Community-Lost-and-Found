@@ -56,7 +56,7 @@ export function CommentForm({
   }
 
   if (loading) {
-    return <div className="skeleton h-24 animate-shimmer rounded-lg" />;
+    return <div className="skeleton h-24 lg:animate-shimmer rounded-lg" />;
   }
 
   if (!isSignedIn) {
@@ -108,7 +108,7 @@ export function CommentForm({
           )}
         </div>
         <Button type="submit" size="sm" disabled={isSubmitting || text.trim().length === 0}>
-          {isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
+          {isSubmitting ? <Loader2 className="motion-essential animate-spin" /> : <Send />}
           Comment
         </Button>
       </div>
@@ -117,5 +117,5 @@ export function CommentForm({
 }
 
 export function CommentFormSkeleton({ className }: { className?: string }) {
-  return <div className={cn("skeleton h-24 animate-shimmer rounded-lg", className)} />;
+  return <div className={cn("skeleton h-24 lg:animate-shimmer rounded-lg", className)} />;
 }

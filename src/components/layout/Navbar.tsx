@@ -53,6 +53,27 @@ export function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Lock body scroll while the mobile menu is open (ANIMATIONS.md 7.2).
+  React.useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
+
+  // The menu only exists below Tailwind's md breakpoint; close it if the
+  // viewport grows while it is open.
+  React.useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = () => {
+      if (mq.matches) setMobileOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   // Fade in the border/backdrop once the page scrolls (ANIMATIONS.md 7.2).
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -83,7 +104,7 @@ export function Navbar() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b transition-all duration-base ease-out-soft",
+        "sticky top-0 z-40 border-b lg:transition-all lg:duration-base lg:ease-out-soft",
         scrolled
           ? "border-border bg-bg/90 backdrop-blur-md"
           : "border-transparent bg-bg/80 backdrop-blur-sm",
@@ -107,7 +128,7 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink",
+                  "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-ink-soft lg:transition-colors hover:bg-surface hover:text-ink",
                   active && "bg-surface text-ink",
                 )}
               >

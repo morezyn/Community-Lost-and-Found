@@ -163,7 +163,7 @@ export function ReportCategoryDialog({
             Cancel
           </Button>
           <Button onClick={() => void handleSubmit()} disabled={busy || !categoryId}>
-            {busy ? <Loader2 className="animate-spin" /> : <Tag />}
+            {busy ? <Loader2 className="motion-essential animate-spin" /> : <Tag />}
             {isApprove ? "Approve report" : "Save category"}
           </Button>
         </DialogFooter>

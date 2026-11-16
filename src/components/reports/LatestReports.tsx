@@ -83,7 +83,7 @@ export function LatestReports() {
 export function LatestReportsLoadingHint() {
   return (
     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-      <Loader2 className="size-3 animate-spin" /> Loading reports
+      <Loader2 className="size-3 motion-essential animate-spin" /> Loading reports
     </span>
   );
 }

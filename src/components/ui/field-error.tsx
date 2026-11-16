@@ -14,7 +14,7 @@ interface FieldErrorProps {
 export function FieldError({ children, className }: FieldErrorProps) {
   if (!children) return null;
   return (
-    <p role="alert" className={cn("animate-slide-down text-xs text-destructive", className)}>
+    <p role="alert" className={cn("lg:animate-slide-down text-xs text-destructive", className)}>
       {children}
     </p>
   );

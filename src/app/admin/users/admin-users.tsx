@@ -150,7 +150,7 @@ export function AdminUsers() {
                         >
                           <SelectTrigger className="h-8 w-[130px]" aria-label="Change role">
                             {busyUid === user.uid ? (
-                              <Loader2 className="size-3.5 animate-spin" />
+                              <Loader2 className="size-3.5 motion-essential animate-spin" />
                             ) : (
                               <SelectValue />
                             )}

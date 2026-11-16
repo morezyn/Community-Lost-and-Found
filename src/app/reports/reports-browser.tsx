@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertCircle, Inbox, Loader2, PlusCircle, RotateCcw } from "lucide-react";
 
 import { useReports } from "@/hooks/useReports";
+import { useMotionEnabled } from "@/hooks/useMotionEnabled";
 import { subscribeToCategories } from "@/lib/firebase/categories";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -31,6 +32,39 @@ export function ReportsBrowser() {
   } = useReports();
 
   const [categories, setCategories] = React.useState<Category[]>([]);
+  const motionEnabled = useMotionEnabled();
+
+  // 7.5b: fade the grid while filters are applied instead of snapping to
+  // skeletons. Client-side filters resolve instantly, so we hold a short dim;
+  // server-side filters report through `loading`.
+  const filterKey = React.useMemo(
+    () =>
+      JSON.stringify({
+        types: filters.types,
+        categoryId: filters.categoryId,
+        status: filters.status,
+        search: filters.search,
+        location: filters.location,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        sort: filters.sort,
+      }),
+    [filters],
+  );
+  const [fading, setFading] = React.useState(false);
+  const previousFilterKey = React.useRef(filterKey);
+
+  React.useEffect(() => {
+    if (previousFilterKey.current === filterKey) return;
+    previousFilterKey.current = filterKey;
+    if (!motionEnabled) return;
+
+    setFading(true);
+    const timeout = window.setTimeout(() => setFading(false), 200);
+    return () => window.clearTimeout(timeout);
+  }, [filterKey, motionEnabled]);
+
+  const filtering = loading || fading;
 
   React.useEffect(() => {
     const unsubscribe = subscribeToCategories((next) => setCategories(next), true);
@@ -86,7 +120,7 @@ export function ReportsBrowser() {
         </Alert>
       )}
 
-      {loading ? (
+      {loading && reports.length === 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <ReportCardSkeleton key={index} />
@@ -115,8 +149,9 @@ export function ReportsBrowser() {
       ) : (
         <StaggerGroup
           className={cn(
-            "grid gap-4 transition-opacity duration-base ease-out-soft sm:grid-cols-2 lg:grid-cols-3",
-            loadingMore && "opacity-60",
+            "grid gap-4 lg:transition-opacity lg:duration-base lg:ease-out-soft sm:grid-cols-2 lg:grid-cols-3",
+            loadingMore && "lg:opacity-60",
+            filtering && "lg:opacity-40",
           )}
         >
           {reports.map((report) => (
@@ -132,7 +167,7 @@ export function ReportsBrowser() {
           {hasMore ? (
             <>
               <Button variant="outline" onClick={() => void loadMore()} disabled={loadingMore}>
-                {loadingMore && <Loader2 className="animate-spin" />}
+                {loadingMore && <Loader2 className="motion-essential animate-spin" />}
                 Load more reports
               </Button>
               <p className="text-xs text-muted-foreground">

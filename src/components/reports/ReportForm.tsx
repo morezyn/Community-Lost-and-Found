@@ -310,7 +310,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
                   aria-checked={selected}
                   onClick={() => handleTypeChange(option)}
                   className={cn(
-                    "flex flex-col items-start gap-1 rounded-card border p-3 text-left transition-all duration-base ease-out-soft",
+                    "flex flex-col items-start gap-1 rounded-card border p-3 text-left lg:transition-all lg:duration-base lg:ease-out-soft",
                     "focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none",
                     selected
                       ? cn("scale-[1.02] bg-card ring-2", meta.ringClass, "border-transparent")
@@ -321,7 +321,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
                     <span className={cn("size-2 rounded-full", meta.dotClass)} />
                     {meta.label}
                     {selected && (
-                      <Check className="animate-badge-pop ml-auto size-4" aria-hidden="true" />
+                      <Check className="lg:animate-badge-pop ml-auto size-4" aria-hidden="true" />
                     )}
                   </span>
                   <span className="text-xs text-muted-foreground">{meta.description}</span>
@@ -546,7 +546,7 @@ export function ReportForm({ mode, initialReport, initialAnswer }: ReportFormPro
             Cancel
           </Button>
           <Button type="submit" disabled={submitDisabled}>
-            {isSubmitting && <Loader2 className="animate-spin" />}
+            {isSubmitting && <Loader2 className="motion-essential animate-spin" />}
             {mode === "create" ? "Submit report" : "Save changes"}
           </Button>
         </div>

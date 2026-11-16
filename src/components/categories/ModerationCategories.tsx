@@ -129,7 +129,7 @@ export function ModerationCategories() {
                     onClick={() => void handleWithdraw(request)}
                     disabled={busyId === request.id}
                   >
-                    {busyId === request.id ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                    {busyId === request.id ? <Loader2 className="motion-essential animate-spin" /> : <Trash2 />}
                     Withdraw
                   </Button>
                 </div>

@@ -35,7 +35,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-[14px] border border-border bg-card px-4 py-2 text-sm text-ink whitespace-nowrap shadow-none transition-[color,box-shadow,border-color] outline-none",
+        "flex w-full items-center justify-between gap-2 rounded-[14px] border border-border bg-card px-4 py-2 text-sm text-ink whitespace-nowrap shadow-none lg:transition-[color,box-shadow,border-color] outline-none",
         "data-[size=default]:h-12 data-[size=sm]:h-10",
         "focus-visible:border-accent-brand focus-visible:ring-2 focus-visible:ring-accent-brand/30",
         "aria-invalid:border-danger aria-invalid:ring-danger/20",
@@ -68,7 +68,7 @@ function SelectContent({
         position={position}
         className={cn(
           "relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-card border border-border bg-card text-ink shadow-[0_8px_30px_rgba(35,34,30,0.08)]",
-          "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
+          "lg:data-[state=closed]:animate-out data-[state=closed]:fade-out-0 lg:data-[state=open]:animate-in data-[state=open]:fade-in-0",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
           className,

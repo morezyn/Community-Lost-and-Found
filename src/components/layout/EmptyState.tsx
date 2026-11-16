@@ -25,7 +25,7 @@ export function EmptyState({
       )}
     >
       {Icon && (
-        <span className="animate-float flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <span className="lg:animate-float flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
           <Icon className="size-5" />
         </span>
       )}

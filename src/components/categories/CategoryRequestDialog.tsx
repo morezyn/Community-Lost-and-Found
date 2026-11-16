@@ -135,7 +135,7 @@ export function CategoryRequestDialog({
                       form.setValue("appliesTo", next, { shouldValidate: true });
                     }}
                     className={cn(
-                      "rounded-lg border px-3 py-1.5 text-xs font-medium transition",
+                      "rounded-lg border px-3 py-1.5 text-xs font-medium lg:transition",
                       selected
                         ? "border-primary bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-accent",
@@ -175,7 +175,7 @@ export function CategoryRequestDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
+              {form.formState.isSubmitting ? <Loader2 className="motion-essential animate-spin" /> : <Send />}
               Send request
             </Button>
           </DialogFooter>

@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, ImageOff, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FadeImage } from "@/components/ui/fade-image";
 
 interface ReportGalleryProps {
   images: string[];
@@ -38,15 +39,14 @@ export function ReportGallery({ images, title }: ReportGalleryProps) {
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="block w-full overflow-hidden rounded-card border border-border bg-surface transition-all duration-base ease-out-soft focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none"
+        className="block w-full overflow-hidden rounded-card border border-border bg-surface lg:transition-all lg:duration-base lg:ease-out-soft focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none"
         aria-label="Open photo full screen"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <FadeImage
           key={active}
           src={active}
           alt={`${title} — photo ${activeIndex + 1} of ${images.length}`}
-          className="animate-fade-in max-h-[520px] w-full object-contain"
+          className="max-h-[520px] w-full object-contain"
         />
       </button>
 
@@ -58,7 +58,7 @@ export function ReportGallery({ images, title }: ReportGalleryProps) {
               type="button"
               onClick={() => setActiveIndex(index)}
               className={cn(
-                "aspect-square overflow-hidden rounded-lg border-2 bg-muted transition-opacity duration-fast ease-out-soft",
+                "aspect-square overflow-hidden rounded-lg border-2 bg-muted lg:transition-opacity lg:duration-fast lg:ease-out-soft",
                 index === activeIndex
                   ? "border-primary"
                   : "border-transparent opacity-70 hover:opacity-100",
@@ -66,8 +66,7 @@ export function ReportGallery({ images, title }: ReportGalleryProps) {
               aria-label={`Show photo ${index + 1}`}
               aria-current={index === activeIndex}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <FadeImage
                 src={image}
                 alt=""
                 className="size-full object-cover"
@@ -85,8 +84,7 @@ export function ReportGallery({ images, title }: ReportGalleryProps) {
         >
           <DialogTitle className="sr-only">{title}</DialogTitle>
           <div className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FadeImage
               src={active}
               alt={`${title} — photo ${activeIndex + 1} of ${images.length}`}
               className="max-h-[80dvh] w-full rounded-card object-contain"

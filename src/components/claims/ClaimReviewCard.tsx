@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ClaimStatusBadge } from "@/components/reports/StatusBadge";
+import { FadeImage } from "@/components/ui/fade-image";
 import type { Claim } from "@/types";
 
 interface ClaimReviewCardProps {
@@ -74,8 +75,8 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
   return (
     <article
       className={cn(
-        "space-y-3 rounded-xl border bg-card p-4 shadow-sm transition-colors duration-slow ease-out-soft",
-        flash && "animate-highlight-flash",
+        "space-y-3 rounded-xl border bg-card p-4 shadow-sm lg:transition-colors lg:duration-slow lg:ease-out-soft",
+        flash && "lg:animate-highlight-flash",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -87,7 +88,7 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
         </div>
         <span
           key={claim.status}
-          className={cn("inline-flex", claim.status !== "pending" && "animate-badge-pop")}
+          className={cn("inline-flex", claim.status !== "pending" && "lg:animate-badge-pop")}
         >
           <ClaimStatusBadge status={claim.status} />
         </span>
@@ -125,11 +126,10 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
             rel="noreferrer"
             className="block overflow-hidden rounded-lg border bg-muted"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FadeImage
               src={claim.proofImageUrl}
               alt="Proof photo submitted with this response"
-              className="max-h-64 w-full object-cover transition hover:opacity-95"
+              className="max-h-64 w-full object-cover lg:transition-opacity hover:opacity-95"
               loading="lazy"
             />
           </a>
@@ -162,7 +162,7 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
               onClick={() => void decide("rejected")}
               disabled={busy !== null}
             >
-              {busy === "rejected" ? <Loader2 className="animate-spin" /> : <X />}
+              {busy === "rejected" ? <Loader2 className="motion-essential animate-spin" /> : <X />}
               Reject
             </Button>
             <Button
@@ -170,7 +170,7 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
               onClick={() => void decide("approved")}
               disabled={busy !== null}
             >
-              {busy === "approved" ? <Loader2 className="animate-spin" /> : <Check />}
+              {busy === "approved" ? <Loader2 className="motion-essential animate-spin" /> : <Check />}
               {isFinderResponse ? "Approve" : "Approve claim"}
             </Button>
           </div>

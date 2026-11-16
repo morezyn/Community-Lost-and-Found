@@ -13,6 +13,7 @@ import {
   markNotificationRead,
 } from "@/lib/firebase/notifications";
 import { useAuth } from "@/hooks/useAuth";
+import { useMotionEnabled } from "@/hooks/useMotionEnabled";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
 
 export function NotificationBell() {
   const { profile } = useAuth();
+  const motionEnabled = useMotionEnabled();
   const { notifications, unreadCount, loading } = useNotifications();
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
@@ -38,13 +40,16 @@ export function NotificationBell() {
     previousUnreadRef.current = unreadCount;
     if (previous === null || unreadCount <= previous) return;
 
-    setBellPulse((count) => count + 1);
+    // Screen readers should hear about new notifications on every device.
     setAnnouncement(
       `${unreadCount - previous} new notification${unreadCount - previous === 1 ? "" : "s"}`,
     );
+    if (!motionEnabled) return;
+
+    setBellPulse((count) => count + 1);
     const timeout = setTimeout(() => setBellPulse(0), 700);
     return () => clearTimeout(timeout);
-  }, [unreadCount]);
+  }, [unreadCount, motionEnabled]);
 
   async function openNotification(id: string, link: string, read: boolean) {
     try {
@@ -76,16 +81,16 @@ export function NotificationBell() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="relative flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-base ease-out-soft hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none"
+            className="relative flex size-9 items-center justify-center rounded-lg text-muted-foreground lg:transition-colors lg:duration-base lg:ease-out-soft hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none"
             aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
           >
-            <Bell className={cn("size-4", bellPulse > 0 && "animate-bell-ring")} />
+            <Bell className={cn("size-4", bellPulse > 0 && "lg:animate-bell-ring")} />
             {unreadCount > 0 && (
               <span
                 key={`${unreadCount}-${bellPulse}`}
                 className={cn(
                   "absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-4 text-destructive-foreground",
-                  bellPulse > 0 && "animate-badge-pop",
+                  bellPulse > 0 && "lg:animate-badge-pop",
                 )}
               >
                 {unreadCount > 9 ? "9+" : unreadCount}
@@ -123,7 +128,7 @@ export function NotificationBell() {
               notifications.slice(0, 8).map((notification, index) => (
                 <DropdownMenuItem
                   key={notification.id}
-                  className="animate-slide-down items-start gap-2 py-2"
+                  className="lg:animate-slide-down items-start gap-2 py-2"
                   style={{ animationDelay: `${Math.min(index, 7) * 40}ms` }}
                   onSelect={() =>
                     void openNotification(

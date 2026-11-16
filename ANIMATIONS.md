@@ -3,6 +3,8 @@
 > Motion specification for opencode. Read together with `AGENTS.md` (features), `DESIGN.md` (visual style), and `SECURITY.md` (security).
 > Motion supports the design. It never blocks the user, hides content, or slows the app down.
 > If this file conflicts with `DESIGN.md` on visual style, `DESIGN.md` wins. On accessibility and performance, **this file wins**.
+>
+> **Scope: desktop website only.** Animations run only on desktop-size screens (viewport 1024px and wider). On phones and tablets (below 1024px) the site has **no animations or transitions**: everything appears instantly. See section 1A.
 
 ---
 
@@ -12,12 +14,40 @@ The design language is **calm, warm, and premium** (inspired by the Pebble Flow 
 
 - **Gentle, not flashy.** Soft fades, small upward drifts, slow image scaling. No bouncing, spinning, shaking, or parallax overload.
 - **Purposeful.** Every animation must do one of these: guide attention, show a state change, give feedback, or smooth a transition. If it does none, remove it.
-- **Fast.** UI feedback is quick (150-250ms). Only large, one1-time reveals take longer (up to ~700ms).
+- **Fast.** UI feedback is quick (150-250ms). Only large, one-time reveals take longer (up to ~700ms).
 - **Consistent.** Reuse the same durations and easings everywhere (section 3).
 - **Accessible.** Respect `prefers-reduced-motion`. Nothing essential depends on animation.
-- **Cheap.** Animate only `transform` and `opacity`. 60fps on a mid-range phone.
+- **Cheap.** Animate only `transform` and `opacity`. Smooth 60fps on a mid-range laptop.
 
 **Mood keywords:** smooth, soft, unhurried, confident, polished.
+
+---
+
+## 1A. Platform Scope: Desktop Website Only
+
+This animation system is **for the desktop website only. It does not apply to mobile.**
+
+- **Enabled:** viewport width **1024px and up** (Tailwind `lg` breakpoint), and only when the user has not enabled `prefers-reduced-motion`.
+- **Disabled:** everything below 1024px (phones and most tablets). Menus, dialogs, sheets, tabs, accordions, toasts, cards, and lists simply appear, change, and disappear **instantly**. No reveals, no hover/press effects, no page transitions, no count-ups, no chart animation, no confetti, no bell wiggle.
+- This is a responsive website, not a native mobile app. Nothing here targets React Native or app-style gestures.
+
+### How to enforce it (two layers, use both)
+
+1. **Prefix every animation and transition utility with `lg:`.**
+   Examples: `lg:animate-fade-up`, `lg:transition-transform lg:duration-slow lg:ease-out-soft`, `lg:hover:-translate-y-1`, `lg:data-[state=open]:animate-in`.
+   An unprefixed `animate-*` or `transition-*` class is a bug.
+2. **Global safety net in CSS** (section 4.2) that switches off any remaining motion below 1024px, so a missed prefix can never animate on mobile.
+3. **JS-driven motion** must be gated by the `useMotionEnabled()` hook (section 6.3). It returns `true` only at 1024px+ **and** when reduced motion is off. `Reveal`, `CountUp`, parallax, Recharts animation, the bell wiggle, confetti, and carousel arrow effects all check it.
+
+### Exceptions (functional, kept on mobile)
+- **Loading spinners** (`Loader2` with `animate-spin`) stay, because they tell the user something is in progress. Give them the class `motion-essential` so the safety net skips them.
+- **Native swipe scrolling** in carousels (CSS scroll-snap) stays, since it is normal browser behavior, not an added animation.
+- Skeleton placeholders stay on mobile but are **static** (no shimmer).
+
+### Mobile rules
+- Mobile always gets the **final state immediately**. Never hide content waiting for an animation to play.
+- State changes on mobile are still communicated with color, text, and icons (for example, the new status badge simply appears).
+- Resizing the window across 1024px must switch behavior cleanly (the hook listens for changes).
 
 ---
 
@@ -73,7 +103,7 @@ If used:
 Exits are **faster** than entrances (about 70% of the duration).
 
 ### 3.3 Distances & Scales
-- Reveal drift: `translateY(24px)` desktop, `16px` mobile
+- Reveal drift: `translateY(24px)` (desktop only)
 - Hover lift (cards): `translateY(-4px)`
 - Image hover zoom: `scale(1.05)`, never more than `1.08`
 - Button press: `scale(0.97)`
@@ -150,14 +180,17 @@ animation: {
 ### 4.2 `globals.css`: reduced motion and helpers
 
 ```css
-/* Respect the user's OS-level motion preference everywhere */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+/* Safety net: NO motion on mobile/tablet (below 1024px) or when the user
+   prefers reduced motion. Functional spinners opt out with .motion-essential */
+@media (max-width: 1023.98px), (prefers-reduced-motion: reduce) {
+  *:not(.motion-essential),
+  *:not(.motion-essential)::before,
+  *:not(.motion-essential)::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }
@@ -173,8 +206,10 @@ animation: {
   background-size: 200% 100%;
 }
 
-/* Smooth anchor scrolling (disabled automatically for reduced motion above) */
-html { scroll-behavior: smooth; }
+/* Smooth anchor scrolling: desktop only, and not for reduced motion */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 ```
 
 ---
@@ -219,12 +254,13 @@ Fade the content in (`animate-fade-in`) when it replaces the skeleton so it does
 
 Create these in `src/components/motion/` and `src/hooks/`.
 
-### 6.1 `Reveal` (scroll reveal using IntersectionObserver)
+### 6.1 `Reveal` (scroll reveal using IntersectionObserver, desktop only)
 
 ```tsx
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import { useMotionEnabled } from "@/hooks/useMotionEnabled";
 
 interface RevealProps {
   children: ReactNode;
@@ -233,24 +269,27 @@ interface RevealProps {
   as?: "div" | "section" | "li" | "article";
 }
 
+type RevealState = "visible" | "hidden" | "shown";
+
 export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null);
-  const [shown, setShown] = useState(false);
+  const motionEnabled = useMotionEnabled();
+  // Start VISIBLE so server render, no-JS, and mobile all show content immediately
+  const [state, setState] = useState<RevealState>("visible");
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-
-    // Skip animation entirely if the user prefers reduced motion
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShown(true);
+    // Mobile / reduced motion: stay visible, do nothing
+    if (!el || !motionEnabled) {
+      setState("visible");
       return;
     }
 
+    setState("hidden"); // desktop only: hide, then reveal when scrolled into view
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setShown(true);
+          setState("shown");
           observer.disconnect(); // animate once only
         }
       },
@@ -258,9 +297,9 @@ export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }:
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [motionEnabled]);
 
-  const style: CSSProperties = { transitionDelay: `${delay}ms` };
+  const style: CSSProperties = motionEnabled ? { transitionDelay: `${delay}ms` } : {};
 
   return (
     // @ts-expect-error polymorphic ref typing kept simple on purpose
@@ -268,8 +307,9 @@ export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }:
       ref={ref}
       style={style}
       className={[
-        "transition-all duration-reveal ease-out-soft will-change-transform",
-        shown ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
+        // lg: prefix = desktop only
+        "lg:transition-all lg:duration-reveal lg:ease-out-soft",
+        state === "hidden" ? "opacity-0 lg:translate-y-6" : "opacity-100 lg:translate-y-0",
         className,
       ].join(" ")}
     >
@@ -278,32 +318,36 @@ export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }:
   );
 }
 ```
-> Note: `will-change-transform` here is acceptable because it is removed in practice once the transition finishes. If the agent prefers, remove it after `transitionend`.
+> Hero content uses the load animation (section 7.3) instead of `Reveal`, so above-the-fold content doesn't flash hidden on desktop.
 
 ### 6.2 `StaggerGroup` helper
 Wraps children and assigns `delay = Math.min(index * 70, 500)` to each `Reveal`.
 
-### 6.3 `useReducedMotion` hook
+### 6.3 `useMotionEnabled` hook (replaces any `useReducedMotion` usage)
 
 ```ts
 "use client";
 import { useEffect, useState } from "react";
 
-export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
+// Motion is allowed ONLY on desktop-size screens AND when the user has not asked for reduced motion
+const QUERY = "(min-width: 1024px) and (prefers-reduced-motion: no-preference)";
+
+export function useMotionEnabled(): boolean {
+  const [enabled, setEnabled] = useState(false); // false on server and first render = safe default
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
+    const mq = window.matchMedia(QUERY);
+    setEnabled(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setEnabled(e.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
-  return reduced;
+  return enabled;
 }
 ```
+Every JS-driven animation (`Reveal`, `CountUp`, parallax, Recharts `isAnimationActive`, confetti, bell wiggle) must read this hook and do nothing when it returns `false`.
 
 ### 6.4 `useCountUp` / `CountUp` component
-Animates numbers from 0 to the target over ~1200ms with an ease-out curve when scrolled into view (used for landing stats and admin dashboard stat cards). Uses `requestAnimationFrame`. Shows the final value immediately when reduced motion is on. Format with `Intl.NumberFormat`.
+Animates numbers from 0 to the target over ~1200ms with an ease-out curve when scrolled into view (used for landing stats and admin dashboard stat cards). Uses `requestAnimationFrame`. Shows the final value immediately when motion is disabled (mobile or reduced motion). Format with `Intl.NumberFormat`.
 
 ### 6.5 `useInView` hook
 Small reusable wrapper around `IntersectionObserver` (used by `Reveal`, `CountUp`, and charts).
@@ -319,8 +363,8 @@ Small reusable wrapper around `IntersectionObserver` (used by `Reveal`, `CountUp
 ### 7.2 Navbar
 - Transparent bottom border at the top of the page. On scroll past ~8px, the border and a subtle backdrop blur fade in (`transition duration-base`).
 - Optional: hide on scroll down, show on scroll up (`translateY(-100%)`, 250ms). Keep it always visible if it causes jank.
-- **Mobile menu sheet:** slides in from the right/top with a dimmed backdrop fade (`duration-slow`). Menu links stagger in (50ms steps). Lock body scroll while open.
-- Avatar dropdown: `animate-scale-in` from the top-right origin.
+- **Mobile menu:** opens and closes **instantly** (no slide, fade, or stagger). Lock body scroll while open.
+- Avatar dropdown: `lg:animate-scale-in` from the top-right origin (desktop only; instant on mobile).
 
 ### 7.3 Hero
 - On load, sequence (each `animate-fade-up`):
@@ -344,7 +388,7 @@ See 5.1. Loading state swaps in a spinner without changing the button size.
 - Native **CSS scroll-snap** (`scroll-snap-type: x mandatory`) with `scroll-behavior: smooth`.
 - Arrow buttons call `scrollBy` for one card width. Disabled arrows fade to 40% opacity at the ends.
 - The next card "peeks" at the edge. The active card is full opacity; off-screen cards slightly dimmed (opacity 0.6, transition 250ms).
-- Supports touch swipe naturally. No autoplay (autoplay hurts accessibility). If autoplay is ever added, it must pause on hover/focus and be disabled for reduced motion.
+- Touch swipe works through native scrolling (browser behavior, not an added animation, so it stays on mobile). Arrow buttons, smooth `scrollBy`, and the dimming of off-screen cards are **desktop only**. No autoplay (autoplay hurts accessibility). If autoplay is ever added, it must pause on hover/focus and be disabled for reduced motion.
 
 ### 7.7 Report Card
 - Entrance: `Reveal` with stagger when the grid first loads.
@@ -358,14 +402,14 @@ See 5.1. Loading state swaps in a spinner without changing the button size.
 - Row background shifts subtly on hover (`hover:bg-surface`).
 
 ### 7.9 Dialogs, Sheets, Dropdowns, Popovers
-- Dialog: overlay fades (200ms); content `scale-in` (from 0.96, 250ms).
-- Sheet (mobile): slides from bottom (`translateY(100%) → 0`, 350ms ease-out-soft). Backdrop fades.
+- Dialog (desktop only): overlay fades (200ms); content `scale-in` (from 0.96, 250ms). On mobile, dialogs appear instantly.
+- Sheet (mobile): appears and disappears **instantly**, with no slide or fade.
 - Dropdowns/popovers: `scale-in` from the trigger edge (transform-origin set from Radix CSS variable).
 - Exits are faster (about 150ms).
-- Use shadcn/Radix `data-[state=open]` / `data-[state=closed]` animation classes (`animate-in`, `animate-out`, `fade-in-0`, `zoom-in-95`).
+- Use shadcn/Radix `data-[state=open]` / `data-[state=closed]` animation classes, **prefixed with `lg:`** (for example `lg:data-[state=open]:animate-in lg:data-[state=open]:fade-in-0 lg:data-[state=open]:zoom-in-95`) so they only run on desktop.
 
 ### 7.10 Toasts (sonner)
-- Slide + fade in from the bottom-right (desktop) or top (mobile), auto-dismiss after 4s, pause on hover. Keep sonner's defaults, themed with `bg-ink text-bg` and pill shape.
+- Desktop: slide + fade in from the bottom-right. Mobile: appears instantly at the top, no motion (the global CSS safety net handles sonner's internal animations). Auto-dismiss after 4s, pause on hover. Themed with `bg-ink text-bg` and pill shape.
 
 ### 7.11 Forms
 - **Focus:** the input border transitions to ink and shows the accent ring (`transition-shadow duration-fast`).
@@ -426,7 +470,7 @@ See 5.1. Loading state swaps in a spinner without changing the button size.
 
 ## 8. Accessibility Rules for Motion
 
-- **`prefers-reduced-motion: reduce`** is honored globally (section 4.2) and in JS hooks (`useReducedMotion`). With reduced motion: no parallax, no wiggle, no float, no confetti, no auto-playing anything; opacity fades of up to 150ms are acceptable.
+- **`prefers-reduced-motion: reduce`** is honored globally (section 4.2) and in JS hooks (`useMotionEnabled`). With reduced motion: no parallax, no wiggle, no float, no confetti, no auto-playing anything; opacity fades of up to 150ms are acceptable.
 - **Never** flash more than 3 times per second (WCAG 2.3.1). Highlight flashes fade slowly (1.8s) specifically to comply.
 - No autoplaying carousels or looping decorative animation that can't be paused.
 - Don't hide content until an animation completes in a way that traps keyboard/screen-reader users. Animated elements stay in the DOM and focusable.
@@ -446,7 +490,7 @@ See 5.1. Loading state swaps in a spinner without changing the button size.
 6. Unsubscribe `onSnapshot` listeners on unmount (see `AGENTS.md`), and don't re-trigger entrance animations on every snapshot update. Only animate **newly added** documents and **changed fields** (compare against the previous list by ID).
 7. Keep animated images optimized (`next/image`, correct `sizes`, Cloudinary `f_auto,q_auto` transformations).
 8. Do not animate large blurred or `filter`/`backdrop-filter` areas continuously. Avoid animating `box-shadow` on big elements (animate an `opacity` pseudo-element instead).
-9. Test on a throttled CPU (Chrome DevTools: 4x slowdown) and a real phone if possible. Remove any effect that drops below ~50fps.
+9. Test on a throttled CPU (Chrome DevTools: 4x slowdown) at desktop width. Remove any effect that drops below ~50fps. Also check a phone-size viewport (and a real phone) to confirm **no animation runs** there.
 10. Cumulative Layout Shift must stay near 0. Reserve space for images, skeletons, and expanding elements.
 
 ---
@@ -471,20 +515,20 @@ Integrate with the phases in `AGENTS.md`. Don't build all motion up front. Add i
 
 | When | Motion work |
 |---|---|
-| **Phase 1** | Add Tailwind motion tokens, keyframes, and the reduced-motion CSS (section 4). Create `useReducedMotion`, `useInView`, `Reveal` |
+| **Phase 1** | Add Tailwind motion tokens, keyframes, and the reduced-motion CSS (section 4). Create `useMotionEnabled`, `useInView`, `Reveal` (all desktop-only, section 1A) |
 | **Phase 2-3** | Button/hover/press states, navbar behavior, skeletons and image fade-in, form focus/validation motion, upload thumbnails and progress |
 | **Phase 3** | Landing page sections and hero sequence, report card hover, grid reveal, filter transitions, tabs, carousel, accordion |
 | **Phase 4** | Real-time comment entrance + highlight (7.13) |
 | **Phase 5** | Notification bell/badge animations (7.14), claim flow success states |
 | **Phase 6-7** | Moderation row exit animations, `CountUp`, Recharts animation settings |
 | **Phase 8** | Polish pass: reduced-motion audit, performance audit (CPU throttling), remove anything janky |
-| **Phase 9** | Final visual check on a real phone; record the real-time demos |
+| **Phase 9** | Final check: animations work on desktop and a real phone shows none; record the real-time demos on desktop |
 
 ---
 
 ## 12. Presentation Highlights (Motion Moments to Demo)
 
-Make these feel great because they will be shown live:
+Make these feel great because they will be shown live. Demo them on a **desktop browser** (animations are off on mobile by design):
 1. **Hero load sequence** and smooth scroll reveals on the landing page
 2. **Two-window real-time demo:** post a comment in one browser; it slides in and flashes in the other
 3. **Moderator approves a report:** the status badge pops and the card flashes in the user's feed; the bell rings with a new notification
@@ -502,7 +546,9 @@ Make these feel great because they will be shown live:
 - [ ] Real-time animations fire only for new/changed items, not on every snapshot
 - [ ] All animations are interruptible; nothing blocks clicks or navigation
 - [ ] Focus states remain visible and dialogs manage focus properly
-- [ ] 60fps on mobile and with 4x CPU throttling in DevTools
+- [ ] 60fps on desktop, including with 4x CPU throttling in DevTools
+- [ ] **No animations or transitions below 1024px** (test at 375px and 768px); content shows instantly
+- [ ] Every animation/transition utility has the `lg:` prefix; JS motion is gated by `useMotionEnabled()`
 - [ ] Live regions (`aria-live`) announce new comments and notifications
 - [ ] No console warnings from hydration mismatches caused by animation state (initial render must match on server and client)
 
@@ -512,7 +558,7 @@ Make these feel great because they will be shown live:
 
 1. Start with CSS/Tailwind and the `Reveal` component. Only add the `motion` library if a pattern truly needs it (list reordering, shared layout, counters), and tell the user why.
 2. Use the motion tokens only. Don't invent new durations or easings without a reason noted in a comment.
-3. Every animated component must handle `prefers-reduced-motion`.
+3. Every animated component is **desktop only** (section 1A): use `lg:`-prefixed utilities, gate JS motion with `useMotionEnabled()`, and respect `prefers-reduced-motion`. Mobile gets no animations.
 4. Keep animation code in small client components. Don't convert whole pages to Client Components just to animate them.
 5. Avoid hydration mismatches: default animated elements to their final visible state on the server render, and apply the "hidden" starting state only after mount when JS is available.
 6. Never let animation interfere with `SECURITY.md` requirements (for example, don't inline scripts that would break the CSP; use components and CSS instead).

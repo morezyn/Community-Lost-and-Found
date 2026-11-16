@@ -44,7 +44,7 @@ export function GoogleButton({
       onClick={onClick}
       disabled={loading}
     >
-      {loading ? <Loader2 className="animate-spin" /> : <GoogleLogo />}
+      {loading ? <Loader2 className="motion-essential animate-spin" /> : <GoogleLogo />}
       {label}
     </Button>
   );

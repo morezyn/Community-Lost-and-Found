@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Reveal } from "@/components/motion/Reveal";
+import { NewsletterButton } from "@/components/layout/NewsletterButton";
 
 const COLUMNS = [
   {
@@ -33,7 +34,7 @@ const COLUMNS = [
 export function Footer() {
   return (
     <footer className="border-t border-border bg-bg">
-      <div className="mx-auto w-full max-w-content px-6 py-12 lg:px-12 lg:py-16">
+      <Reveal className="mx-auto w-full max-w-content px-6 py-12 lg:px-12 lg:py-16">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="space-y-4">
             <div>
@@ -51,9 +52,7 @@ export function Footer() {
                   placeholder="Email address"
                   className="h-11"
                 />
-                <Button type="button" size="sm" className="sm:shrink-0">
-                  Join us
-                </Button>
+                <NewsletterButton />
               </div>
               <label className="flex items-start gap-2 text-xs text-ink-soft">
                 <input type="checkbox" className="mt-0.5 rounded border-border" />
@@ -71,7 +70,7 @@ export function Footer() {
               <ul className="space-y-2 text-sm text-ink-soft">
                 {col.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="hover:text-ink transition-colors">
+                    <Link href={link.href} className="hover:text-ink lg:transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -88,7 +87,7 @@ export function Footer() {
             <span>Terms</span>
           </div>
         </div>
-      </div>
+      </Reveal>
     </footer>
   );
 }

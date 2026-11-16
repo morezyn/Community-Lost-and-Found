@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError } from "@/components/ui/field-error";
+import { FadeImage } from "@/components/ui/fade-image";
 import {
   Dialog,
   DialogContent,
@@ -192,7 +193,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
 
         {success && (
           <div className="flex flex-col items-center gap-3 py-10 text-center" role="status">
-            <span className="flex size-14 animate-scale-in items-center justify-center rounded-full bg-success/10 text-success">
+            <span className="flex size-14 lg:animate-scale-in items-center justify-center rounded-full bg-success/10 text-success">
               <svg
                 viewBox="0 0 24 24"
                 className="size-7"
@@ -203,7 +204,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
                 strokeLinejoin="round"
                 aria-hidden="true"
               >
-                <path className="animate-check-draw" d="M4 12.5 9.5 18 20 6.5" />
+                <path className="lg:animate-check-draw" d="M4 12.5 9.5 18 20 6.5" />
               </svg>
             </span>
             <div className="space-y-1">
@@ -281,9 +282,8 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
           <div className="space-y-1.5">
             <Label htmlFor="claim-proof-photo">Proof photo (optional)</Label>
             {proofImage ? (
-              <div className="group relative aspect-[16/10] w-full animate-scale-in overflow-hidden rounded-lg border bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="group relative aspect-[16/10] w-full lg:animate-scale-in overflow-hidden rounded-lg border bg-muted">
+                <FadeImage
                   src={proofImage.previewUrl}
                   alt="Selected proof photo preview"
                   className="size-full object-cover"
@@ -292,7 +292,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
                   type="button"
                   onClick={clearProofImage}
                   disabled={busy}
-                  className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-destructive disabled:opacity-50"
+                  className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/60 text-white lg:transition hover:bg-destructive disabled:opacity-50"
                   aria-label="Remove proof photo"
                 >
                   <Trash2 className="size-4" />
@@ -303,7 +303,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/30 px-3 py-4 text-sm text-muted-foreground transition duration-base ease-out-soft hover:border-primary/60 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/30 px-3 py-4 text-sm text-muted-foreground lg:transition lg:duration-base lg:ease-out-soft hover:border-primary/60 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ImagePlus className="size-4" />
                 <span>
@@ -337,7 +337,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={busy}>
-              {busy && <Loader2 className="animate-spin" />}
+              {busy && <Loader2 className="motion-essential animate-spin" />}
               {uploadingProof
                 ? "Uploading photo…"
                 : isFinderResponse

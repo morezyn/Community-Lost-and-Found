@@ -46,7 +46,7 @@ export function RouteGuard({ children, allow, redirectTo }: RouteGuardProps) {
   if (loading || !isSignedIn || !allowed) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 motion-essential animate-spin text-muted-foreground" />
       </div>
     );
   }

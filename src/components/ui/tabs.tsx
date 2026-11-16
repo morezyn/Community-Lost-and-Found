@@ -71,7 +71,7 @@ function TabsList({
       <span
         aria-hidden="true"
         data-slot="tabs-indicator"
-        className="pointer-events-none absolute inset-y-1 left-0 rounded-full bg-card shadow-sm ring-1 ring-border/60 transition-[transform,width,opacity] duration-base ease-in-out-soft"
+        className="pointer-events-none absolute inset-y-1 left-0 rounded-full bg-card shadow-sm ring-1 ring-border/60 lg:transition-[transform,width,opacity] lg:duration-base lg:ease-in-out-soft"
         style={{
           width: indicator.width,
           transform: `translateX(${indicator.left}px)`,
@@ -91,7 +91,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex flex-none items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-fast ease-out-soft",
+        "relative inline-flex flex-none items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap lg:transition-colors lg:duration-fast lg:ease-out-soft",
         "text-ink-soft hover:text-ink",
         "focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none",
         "data-[state=active]:text-ink",
@@ -111,7 +111,7 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 outline-none data-[state=active]:animate-fade-in", className)}
+      className={cn("flex-1 outline-none lg:data-[state=active]:animate-fade-in", className)}
       {...props}
     />
   );

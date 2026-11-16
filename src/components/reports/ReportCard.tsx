@@ -4,6 +4,7 @@ import { MapPin, MessageSquare } from "lucide-react";
 import { cn, formatDate, truncate } from "@/lib/utils";
 import { REPORT_TYPE_META } from "@/lib/constants";
 import { TypeBadge, StatusBadge } from "@/components/reports/StatusBadge";
+import { FadeImage } from "@/components/ui/fade-image";
 import type { Report } from "@/types";
 
 interface ReportCardProps {
@@ -21,18 +22,17 @@ export function ReportCard({ report, showStatus = false, className }: ReportCard
     <Link
       href={`/reports/${report.id}`}
       className={cn(
-        "group flex flex-col overflow-hidden rounded-card border border-border bg-card shadow-none transition-all duration-slow ease-out-soft hover:-translate-y-1 hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none",
+        "group flex flex-col overflow-hidden rounded-card border border-border bg-card shadow-none lg:transition-all lg:duration-slow lg:ease-out-soft lg:hover:-translate-y-1 hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-accent-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:outline-none",
         className,
       )}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <FadeImage
             src={image}
             alt={report.title}
             loading="lazy"
-            className="size-full object-cover transition-transform duration-slow ease-out-soft group-hover:scale-[1.05]"
+            className="size-full object-cover lg:transition-[opacity,transform] lg:duration-slow lg:ease-out-soft lg:group-hover:scale-[1.05]"
           />
         ) : (
           <div className="flex size-full items-center justify-center">
@@ -56,7 +56,7 @@ export function ReportCard({ report, showStatus = false, className }: ReportCard
           <span>{formatDate(report.eventDate)}</span>
         </div>
 
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors duration-fast ease-out-soft group-hover:text-primary">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug lg:transition-colors lg:duration-fast lg:ease-out-soft group-hover:text-primary">
           {report.title}
         </h3>
         <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
@@ -86,12 +86,12 @@ export function ReportCardSkeleton({ className }: { className?: string }) {
         className,
       )}
     >
-      <div className="skeleton aspect-[4/3] w-full animate-shimmer" />
+      <div className="skeleton aspect-[4/3] w-full lg:animate-shimmer" />
       <div className="space-y-3 p-4">
-        <div className="skeleton h-3 w-24 animate-shimmer rounded-full" />
-        <div className="skeleton h-4 w-4/5 animate-shimmer rounded-full" />
-        <div className="skeleton h-3 w-full animate-shimmer rounded-full" />
-        <div className="skeleton h-3 w-2/3 animate-shimmer rounded-full" />
+        <div className="skeleton h-3 w-24 lg:animate-shimmer rounded-full" />
+        <div className="skeleton h-4 w-4/5 lg:animate-shimmer rounded-full" />
+        <div className="skeleton h-3 w-full lg:animate-shimmer rounded-full" />
+        <div className="skeleton h-3 w-2/3 lg:animate-shimmer rounded-full" />
       </div>
     </div>
   );

@@ -223,7 +223,7 @@ export function ProfilePage() {
               onClick={handleRefreshVerification}
               disabled={checkingVerification}
             >
-              {checkingVerification ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+              {checkingVerification ? <Loader2 className="motion-essential animate-spin" /> : <RefreshCw />}
               I&apos;ve verified
             </Button>
           </AlertDescription>
@@ -240,7 +240,7 @@ export function ProfilePage() {
             {pendingAuthorClaims.length > 0 && (
               <span
                 key={pendingAuthorClaims.length}
-                className="ml-1 animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground"
+                className="ml-1 lg:animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground"
               >
                 {pendingAuthorClaims.length}
               </span>
@@ -251,7 +251,7 @@ export function ProfilePage() {
             {unreadCount > 0 && (
               <span
                 key={unreadCount}
-                className="ml-1 animate-badge-pop rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground"
+                className="ml-1 lg:animate-badge-pop rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground"
               >
                 {unreadCount}
               </span>
@@ -392,7 +392,7 @@ export function ProfilePage() {
                 <li
                   key={notification.id}
                   className={cn(
-                    "flex animate-slide-down items-start gap-3 px-4 py-3",
+                    "flex lg:animate-slide-down items-start gap-3 px-4 py-3",
                     !notification.read && "bg-primary/[0.03]",
                   )}
                   style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
@@ -476,7 +476,7 @@ export function ProfilePage() {
               </div>
 
               <Button type="submit" disabled={profileForm.formState.isSubmitting}>
-                {profileForm.formState.isSubmitting && <Loader2 className="animate-spin" />}
+                {profileForm.formState.isSubmitting && <Loader2 className="motion-essential animate-spin" />}
                 Save changes
               </Button>
             </form>
@@ -507,7 +507,7 @@ export function ProfilePage() {
                     onClick={handleRefreshVerification}
                     disabled={checkingVerification}
                   >
-                    {checkingVerification ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+                    {checkingVerification ? <Loader2 className="motion-essential animate-spin" /> : <RefreshCw />}
                     Refresh status
                   </Button>
                 )}

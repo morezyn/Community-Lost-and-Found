@@ -239,7 +239,7 @@ export function ReportDetail({ reportId }: { reportId: string }) {
   const typeMeta = REPORT_TYPE_META[report.type];
 
   return (
-    <div className="mx-auto w-full max-w-6xl animate-fade-in px-4 py-8">
+    <div className="mx-auto w-full max-w-6xl lg:animate-fade-in px-4 py-8">
       <Link
         href="/reports"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -274,7 +274,7 @@ export function ReportDetail({ reportId }: { reportId: string }) {
               <TypeBadge type={report.type} />
               <span
                 key={`${report.status}-${statusPulse}`}
-                className={cn("inline-flex", statusPulse > 0 && "animate-badge-pop")}
+                className={cn("inline-flex", statusPulse > 0 && "lg:animate-badge-pop")}
               >
                 <StatusBadge status={report.status} />
               </span>
@@ -392,7 +392,7 @@ export function ReportDetail({ reportId }: { reportId: string }) {
                     key={myClaim.status}
                     className={cn(
                       "flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm",
-                      myClaim.status !== "pending" && "animate-highlight-flash",
+                      myClaim.status !== "pending" && "lg:animate-highlight-flash",
                     )}
                   >
                     <span className="flex items-center gap-2">

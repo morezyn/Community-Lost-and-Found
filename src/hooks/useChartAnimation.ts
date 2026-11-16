@@ -1,29 +1,27 @@
 "use client";
 
 import * as React from "react";
+import { useMotionEnabled } from "@/hooks/useMotionEnabled";
 
 /**
  * Recharts animation props for a one-shot first-mount reveal.
  *
  * Recharts animates on every data change by default, which gets noisy on a
  * live dashboard. We animate the initial draw, then switch animation off.
- * Users who prefer reduced motion never see the animation.
+ * Animation is desktop-only and never runs for reduced-motion users.
  */
 export function useChartAnimation(duration = 900) {
-  const [enabled, setEnabled] = React.useState(true);
+  const motionEnabled = useMotionEnabled();
+  const [firstDrawDone, setFirstDrawDone] = React.useState(false);
 
   React.useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setEnabled(false);
-      return;
-    }
-    const timeout = setTimeout(() => setEnabled(false), duration + 150);
+    if (!motionEnabled) return;
+    const timeout = setTimeout(() => setFirstDrawDone(true), duration + 150);
     return () => clearTimeout(timeout);
-  }, [duration]);
+  }, [motionEnabled, duration]);
 
   return {
-    isAnimationActive: enabled,
+    isAnimationActive: motionEnabled && !firstDrawDone,
     animationDuration: duration,
     animationEasing: "ease-out" as const,
   };

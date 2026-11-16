@@ -120,7 +120,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="animate-spin" />}
+          {isSubmitting && <Loader2 className="motion-essential animate-spin" />}
           Sign in
         </Button>
       </form>

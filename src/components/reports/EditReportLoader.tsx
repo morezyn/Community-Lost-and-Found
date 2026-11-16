@@ -47,7 +47,7 @@ export function EditReportLoader({ reportId }: { reportId: string }) {
   if (loading || authLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 motion-essential animate-spin text-muted-foreground" />
       </div>
     );
   }

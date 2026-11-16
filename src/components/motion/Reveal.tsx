@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
+import { useMotionEnabled } from "@/hooks/useMotionEnabled";
 
 interface RevealProps {
   children: ReactNode;
@@ -21,6 +22,16 @@ interface RevealProps {
   as?: "div" | "section" | "li" | "article" | "span";
 }
 
+type RevealState = "visible" | "hidden" | "shown";
+
+/**
+ * Scroll reveal (ANIMATIONS.md 5.2 / 6.1).
+ *
+ * Starts visible so SSR, no-JS, mobile, and reduced-motion users always see the
+ * content. Only after mount, and only when motion is enabled, does it hide and
+ * wait for the element to enter the viewport. It animates once and never
+ * replays when scrolling back up.
+ */
 export function Reveal({
   children,
   delay = 0,
@@ -28,41 +39,33 @@ export function Reveal({
   as = "div",
 }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [shown, setShown] = useState(true); // visible on server/first paint to avoid hydration mismatch
+  const motionEnabled = useMotionEnabled();
+  const [state, setState] = useState<RevealState>("visible");
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    const el = ref.current;
-    if (!el) return;
-
-    // Skip animation entirely if the user prefers reduced motion
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShown(true);
+    if (!motionEnabled) {
+      setState("visible");
       return;
     }
 
-    // Start hidden, then reveal when in view (animate once).
-    setShown(false);
+    const el = ref.current;
+    if (!el) return;
 
+    setState("hidden");
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setShown(true);
-          observer.disconnect();
+          setState("shown");
+          observer.disconnect(); // animate once only
         }
       },
       { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [mounted]);
+  }, [motionEnabled]);
 
-  const style: CSSProperties = { transitionDelay: `${delay}ms` };
+  const style: CSSProperties = motionEnabled ? { transitionDelay: `${delay}ms` } : {};
 
   return createElement(
     as,
@@ -70,9 +73,10 @@ export function Reveal({
       ref,
       style,
       className: cn(
-        // Only apply reveal transition behavior after mount to avoid hiding SSR content.
-        mounted && "transition-all duration-reveal ease-out-soft will-change-transform",
-        mounted && !shown ? "opacity-0 translate-y-6" : "opacity-100 translate-y-0",
+        "lg:transition-[opacity,transform] lg:duration-reveal lg:ease-out-soft",
+        motionEnabled && state === "hidden"
+          ? "opacity-0 lg:translate-y-6 will-change-transform"
+          : "opacity-100 lg:translate-y-0",
         className,
       ),
     },
