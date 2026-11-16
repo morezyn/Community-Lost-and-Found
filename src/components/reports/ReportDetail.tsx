@@ -90,6 +90,9 @@ export function ReportDetail({ reportId }: { reportId: string }) {
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [resolving, setResolving] = React.useState(false);
+  /** Counts live status changes so the status badge can replay its pop. */
+  const [statusPulse, setStatusPulse] = React.useState(0);
+  const previousStatusRef = React.useRef<string | null>(null);
 
   // Live report document (status badge updates in real time for moderators).
   React.useEffect(() => {
@@ -108,6 +111,14 @@ export function ReportDetail({ reportId }: { reportId: string }) {
     );
     return () => unsubscribe();
   }, [reportId]);
+
+  React.useEffect(() => {
+    if (!report) return;
+    const previous = previousStatusRef.current;
+    previousStatusRef.current = report.status;
+    if (previous === null || previous === report.status) return;
+    setStatusPulse((count) => count + 1);
+  }, [report]);
 
   React.useEffect(() => {
     if (!profile) {
@@ -261,7 +272,12 @@ export function ReportDetail({ reportId }: { reportId: string }) {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <TypeBadge type={report.type} />
-              <StatusBadge status={report.status} />
+              <span
+                key={`${report.status}-${statusPulse}`}
+                className={cn("inline-flex", statusPulse > 0 && "animate-badge-pop")}
+              >
+                <StatusBadge status={report.status} />
+              </span>
               <Badge
                 variant={report.categoryName ? "secondary" : "outline"}
                 className={report.categoryName ? undefined : "text-muted-foreground"}
@@ -303,8 +319,8 @@ export function ReportDetail({ reportId }: { reportId: string }) {
           </section>
 
           {report.type === "found" && report.verificationQuestion && (
-            <section className="rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/5">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            <section className="rounded-xl border border-success/30 bg-success/5 p-4">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-success">
                 <ShieldCheck className="size-3.5" /> Verification question
               </p>
               <p className="mt-1.5 text-sm">{report.verificationQuestion}</p>
@@ -337,9 +353,9 @@ export function ReportDetail({ reportId }: { reportId: string }) {
                   <div className="space-y-1">
                     <h2 className="flex items-center gap-2 text-base font-semibold">
                       {isFinderResponse ? (
-                        <PackageSearch className="size-4 text-emerald-600" />
+                        <PackageSearch className="size-4 text-success" />
                       ) : (
-                        <ShieldCheck className="size-4 text-emerald-600" />
+                        <ShieldCheck className="size-4 text-success" />
                       )}
                       {isFinderResponse ? "Found this item?" : "Is this yours?"}
                     </h2>
@@ -372,7 +388,13 @@ export function ReportDetail({ reportId }: { reportId: string }) {
                 </div>
 
                 {myClaim && !canReviewClaims && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+                  <div
+                    key={myClaim.status}
+                    className={cn(
+                      "flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm",
+                      myClaim.status !== "pending" && "animate-highlight-flash",
+                    )}
+                  >
                     <span className="flex items-center gap-2">
                       {isFinderResponse ? "Your response:" : "Your claim:"}
                       <ClaimStatusBadge status={myClaim.status} />

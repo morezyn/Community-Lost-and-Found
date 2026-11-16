@@ -11,6 +11,7 @@ import {
 } from "recharts";
 
 import type { Report } from "@/types";
+import { useChartAnimation } from "@/hooks/useChartAnimation";
 
 const TOOLTIP_STYLE = {
   backgroundColor: "var(--card)",
@@ -21,6 +22,7 @@ const TOOLTIP_STYLE = {
 };
 
 export function ByCategory({ reports }: { reports: Report[] }) {
+  const chartAnimation = useChartAnimation();
   const counts = new Map<string, number>();
   reports.forEach((report) => {
     // Pending reports have no category yet; bucket them so the chart stays valid.
@@ -58,7 +60,13 @@ export function ByCategory({ reports }: { reports: Report[] }) {
           axisLine={false}
         />
         <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "var(--muted)" }} />
-        <Bar dataKey="total" name="Reports" fill="var(--chart-1)" radius={[0, 6, 6, 0]} />
+        <Bar
+          dataKey="total"
+          name="Reports"
+          fill="var(--chart-1)"
+          radius={[0, 6, 6, 0]}
+          {...chartAnimation}
+        />
       </BarChart>
     </ResponsiveContainer>
   );

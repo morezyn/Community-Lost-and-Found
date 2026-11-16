@@ -213,8 +213,10 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
       scroll-behavior: auto !important;
     }
   }
@@ -305,7 +307,17 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
-
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(12deg); }
+  45% { transform: rotate(-10deg); }
+  70% { transform: rotate(6deg); }
+  85% { transform: rotate(-3deg); }
+}
+@keyframes check-draw {
+  0% { stroke-dashoffset: 48; }
+  100% { stroke-dashoffset: 0; }
+}
 @utility animate-fade-up { animation: fade-up 650ms var(--ease-out-soft) both; }
 @utility animate-fade-in { animation: fade-in 400ms ease-out both; }
 @utility animate-scale-in { animation: scale-in 250ms var(--ease-out-soft) both; }
@@ -315,3 +327,14 @@
 @utility animate-highlight-flash { animation: highlight-flash 1.8s ease-out 1; }
 @utility animate-badge-pop { animation: badge-pop 350ms var(--ease-out-soft) both; }
 @utility animate-float { animation: float 4s ease-in-out infinite; }
+@utility animate-bell-ring { animation: bell-ring 600ms var(--ease-out-soft) 1; }
+@utility animate-check-draw {
+  stroke-dasharray: 48;
+  animation: check-draw 500ms var(--ease-out-soft) forwards;
+}
+/* Fresh real-time item: slide in and flash once (two animations on one element). */
+@utility animate-fresh {
+  animation:
+    slide-down 250ms var(--ease-out-soft) both,
+    highlight-flash 1.8s ease-out 1;
+}

@@ -3,6 +3,7 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { REPORT_TYPE_META } from "@/lib/constants";
+import { useChartAnimation } from "@/hooks/useChartAnimation";
 import type { Report, ReportType } from "@/types";
 
 const TYPE_COLORS: Record<ReportType, string> = {
@@ -20,6 +21,7 @@ const TOOLTIP_STYLE = {
 };
 
 export function TypeBreakdown({ reports }: { reports: Report[] }) {
+  const chartAnimation = useChartAnimation();
   const types: ReportType[] = ["lost", "found", "incident"];
   const data = types
     .map((type) => ({
@@ -48,6 +50,7 @@ export function TypeBreakdown({ reports }: { reports: Report[] }) {
           outerRadius={88}
           paddingAngle={3}
           strokeWidth={0}
+          {...chartAnimation}
         >
           {data.map((entry) => (
             <Cell key={entry.type} fill={TYPE_COLORS[entry.type as ReportType]} />

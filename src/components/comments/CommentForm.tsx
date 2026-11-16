@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldError } from "@/components/ui/field-error";
 import type { Report } from "@/types";
 
 export function CommentForm({
@@ -55,7 +56,7 @@ export function CommentForm({
   }
 
   if (loading) {
-    return <div className="h-24 animate-pulse rounded-lg bg-muted" />;
+    return <div className="skeleton h-24 animate-shimmer rounded-lg" />;
   }
 
   if (!isSignedIn) {
@@ -99,13 +100,13 @@ export function CommentForm({
         {...register("text")}
       />
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-muted-foreground">
+        <div className="min-w-0 flex-1">
           {errors.text ? (
-            <span className="text-destructive">{errors.text.message}</span>
+            <FieldError>{errors.text.message}</FieldError>
           ) : (
-            `${text.length}/500`
+            <span className="text-xs text-muted-foreground">{text.length}/500</span>
           )}
-        </span>
+        </div>
         <Button type="submit" size="sm" disabled={isSubmitting || text.trim().length === 0}>
           {isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
           Comment
@@ -116,5 +117,5 @@ export function CommentForm({
 }
 
 export function CommentFormSkeleton({ className }: { className?: string }) {
-  return <div className={cn("h-24 animate-pulse rounded-lg bg-muted", className)} />;
+  return <div className={cn("skeleton h-24 animate-shimmer rounded-lg", className)} />;
 }

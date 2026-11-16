@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { describeFirebaseError } from "@/lib/firebase/errors";
 import { reviewClaim } from "@/lib/firebase/claims";
-import { timeAgo } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,17 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
   const isFinderResponse = claim.reportType === "lost";
   const [note, setNote] = React.useState("");
   const [busy, setBusy] = React.useState<"approved" | "rejected" | null>(null);
+  const [flash, setFlash] = React.useState(false);
+  const previousStatusRef = React.useRef(claim.status);
+
+  // Soft highlight when a reviewer decision lands (live via onSnapshot).
+  React.useEffect(() => {
+    if (previousStatusRef.current === claim.status) return;
+    previousStatusRef.current = claim.status;
+    setFlash(true);
+    const timeout = setTimeout(() => setFlash(false), 2000);
+    return () => clearTimeout(timeout);
+  }, [claim.status]);
 
   async function decide(decision: "approved" | "rejected") {
     if (!profile) return;
@@ -61,7 +72,12 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
   }
 
   return (
-    <article className="space-y-3 rounded-xl border bg-card p-4 shadow-sm">
+    <article
+      className={cn(
+        "space-y-3 rounded-xl border bg-card p-4 shadow-sm transition-colors duration-slow ease-out-soft",
+        flash && "animate-highlight-flash",
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold">{claim.claimantName}</span>
@@ -69,7 +85,12 @@ export function ClaimReviewCard({ claim, canReview }: ClaimReviewCardProps) {
             {isFinderResponse ? "reported finding it" : "claimed"} {timeAgo(claim.createdAt)}
           </span>
         </div>
-        <ClaimStatusBadge status={claim.status} />
+        <span
+          key={claim.status}
+          className={cn("inline-flex", claim.status !== "pending" && "animate-badge-pop")}
+        >
+          <ClaimStatusBadge status={claim.status} />
+        </span>
       </div>
 
       {claim.answer && (

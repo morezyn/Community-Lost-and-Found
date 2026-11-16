@@ -12,6 +12,7 @@ import {
 import { eachDayOfInterval, format, startOfDay, subDays } from "date-fns";
 
 import { toDate } from "@/lib/utils";
+import { useChartAnimation } from "@/hooks/useChartAnimation";
 import type { Report } from "@/types";
 
 const TOOLTIP_STYLE = {
@@ -23,6 +24,7 @@ const TOOLTIP_STYLE = {
 };
 
 export function ReportsOverTime({ reports, days = 30 }: { reports: Report[]; days?: number }) {
+  const chartAnimation = useChartAnimation();
   const today = startOfDay(new Date());
   const buckets = eachDayOfInterval({ start: subDays(today, days - 1), end: today }).map(
     (day) => ({
@@ -66,6 +68,7 @@ export function ReportsOverTime({ reports, days = 30 }: { reports: Report[]; day
           strokeWidth={2}
           dot={false}
           activeDot={{ r: 4 }}
+          {...chartAnimation}
         />
       </LineChart>
     </ResponsiveContainer>

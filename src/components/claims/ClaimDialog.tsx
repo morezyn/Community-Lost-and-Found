@@ -10,10 +10,12 @@ import { claimSchema, validateImageFile, type ClaimSchemaValues } from "@/lib/va
 import { uploadReportImage } from "@/lib/cloudinary";
 import { describeFirebaseError } from "@/lib/firebase/errors";
 import { createClaim } from "@/lib/firebase/claims";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldError } from "@/components/ui/field-error";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +50,14 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
     null,
   );
   const [uploadingProof, setUploadingProof] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+  const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   const {
     register,
@@ -82,6 +92,11 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
     if (!nextOpen) {
       clearProofImage();
       reset();
+      setSuccess(false);
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+        successTimerRef.current = null;
+      }
     }
     onOpenChange(nextOpen);
   }
@@ -135,7 +150,13 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
       );
       clearProofImage();
       reset();
-      onOpenChange(false);
+      setSuccess(true);
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      successTimerRef.current = setTimeout(() => {
+        successTimerRef.current = null;
+        setSuccess(false);
+        onOpenChange(false);
+      }, 1200);
     } catch (error) {
       toast.error(
         describeFirebaseError(
@@ -156,9 +177,9 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isFinderResponse ? (
-              <PackageSearch className="size-5 text-emerald-600" />
+              <PackageSearch className="size-5 text-success" />
             ) : (
-              <ShieldQuestion className="size-5 text-emerald-600" />
+              <ShieldQuestion className="size-5 text-success" />
             )}
             {isFinderResponse ? "I found this item" : "This is mine"}
           </DialogTitle>
@@ -169,7 +190,40 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {success && (
+          <div className="flex flex-col items-center gap-3 py-10 text-center" role="status">
+            <span className="flex size-14 animate-scale-in items-center justify-center rounded-full bg-success/10 text-success">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path className="animate-check-draw" d="M4 12.5 9.5 18 20 6.5" />
+              </svg>
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {isFinderResponse ? "Response sent" : "Claim submitted"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isFinderResponse
+                  ? "The owner has been notified and can follow up in the report."
+                  : "The finder has been notified and will review your answer."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={cn("space-y-4", success && "hidden")}
+          noValidate
+        >
           {isFinderResponse ? (
             <div className="space-y-1.5">
               <Label htmlFor="claim-answer">
@@ -183,9 +237,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
                 aria-invalid={Boolean(errors.answer)}
                 {...register("answer")}
               />
-              {errors.answer && (
-                <p className="text-xs text-destructive">{errors.answer.message}</p>
-              )}
+              <FieldError>{errors.answer?.message}</FieldError>
             </div>
           ) : report.verificationQuestion ? (
             <div className="space-y-1.5">
@@ -199,9 +251,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
                 aria-invalid={Boolean(errors.answer)}
                 {...register("answer")}
               />
-              {errors.answer && (
-                <p className="text-xs text-destructive">{errors.answer.message}</p>
-              )}
+              <FieldError>{errors.answer?.message}</FieldError>
             </div>
           ) : (
             <p className="rounded-lg border border-dashed bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
@@ -225,17 +275,13 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
               aria-invalid={Boolean(errors.proofDescription)}
               {...register("proofDescription")}
             />
-            {errors.proofDescription && (
-              <p className="text-xs text-destructive">
-                {errors.proofDescription.message}
-              </p>
-            )}
+            <FieldError>{errors.proofDescription?.message}</FieldError>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="claim-proof-photo">Proof photo (optional)</Label>
             {proofImage ? (
-              <div className="group relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted">
+              <div className="group relative aspect-[16/10] w-full animate-scale-in overflow-hidden rounded-lg border bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={proofImage.previewUrl}
@@ -257,7 +303,7 @@ export function ClaimDialog({ report, open, onOpenChange }: ClaimDialogProps) {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/30 px-3 py-4 text-sm text-muted-foreground transition hover:border-primary/60 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/30 px-3 py-4 text-sm text-muted-foreground transition duration-base ease-out-soft hover:border-primary/60 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ImagePlus className="size-4" />
                 <span>

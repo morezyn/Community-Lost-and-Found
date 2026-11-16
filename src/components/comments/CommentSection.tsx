@@ -29,11 +29,9 @@ export function CommentSection({
             ({comments.length})
           </span>
         </h2>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
-          <span className="relative flex size-1.5">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
-          </span>
+        {/* Static dot: ANIMATIONS.md forbids infinite decorative loops. */}
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success ring-1 ring-inset ring-success/25">
+          <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
           Live
         </span>
       </div>

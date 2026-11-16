@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError } from "@/components/ui/field-error";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -237,7 +238,10 @@ export function ProfilePage() {
           <TabsTrigger value="claims">
             <ShieldCheck /> Claims &amp; responses
             {pendingAuthorClaims.length > 0 && (
-              <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
+              <span
+                key={pendingAuthorClaims.length}
+                className="ml-1 animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground"
+              >
                 {pendingAuthorClaims.length}
               </span>
             )}
@@ -245,7 +249,10 @@ export function ProfilePage() {
           <TabsTrigger value="notifications">
             <Bell /> Notifications
             {unreadCount > 0 && (
-              <span className="ml-1 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">
+              <span
+                key={unreadCount}
+                className="ml-1 animate-badge-pop rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground"
+              >
                 {unreadCount}
               </span>
             )}
@@ -381,13 +388,14 @@ export function ProfilePage() {
             />
           ) : (
             <ul className="divide-y rounded-xl border bg-card">
-              {notifications.map((notification) => (
+              {notifications.map((notification, index) => (
                 <li
                   key={notification.id}
                   className={cn(
-                    "flex items-start gap-3 px-4 py-3",
+                    "flex animate-slide-down items-start gap-3 px-4 py-3",
                     !notification.read && "bg-primary/[0.03]",
                   )}
+                  style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
                 >
                   <span
                     className={cn(
@@ -434,9 +442,9 @@ export function ProfilePage() {
                   {...profileForm.register("displayName")}
                 />
                 {profileForm.formState.errors.displayName && (
-                  <p className="text-xs text-destructive">
+                  <FieldError>
                     {profileForm.formState.errors.displayName.message}
-                  </p>
+                  </FieldError>
                 )}
               </div>
 
@@ -449,9 +457,9 @@ export function ProfilePage() {
                   {...profileForm.register("photoURL")}
                 />
                 {profileForm.formState.errors.photoURL ? (
-                  <p className="text-xs text-destructive">
+                  <FieldError>
                     {profileForm.formState.errors.photoURL.message}
-                  </p>
+                  </FieldError>
                 ) : (
                   <p className="text-xs text-muted-foreground">
                     Paste a public image URL, or leave blank to use your initials.

@@ -37,6 +37,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { CountUp } from "@/components/ui/count-up";
 import type { AppUser, Report, ReportType } from "@/types";
 
 export function AdminDashboard() {
@@ -138,7 +139,7 @@ export function AdminDashboard() {
               <Link href="/moderation">
                 <Shield /> Moderation
                 {stats.pending > 0 && (
-                  <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                  <span className="ml-1 animate-badge-pop rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
                     {stats.pending}
                   </span>
                 )}
@@ -172,12 +173,14 @@ export function AdminDashboard() {
           value={stats.total}
           hint={`${stats.pending} awaiting review`}
           icon={Inbox}
+          delay={0}
         />
         <StatCard
           label="Open reports"
           value={stats.open}
           hint="Approved, not yet resolved"
           icon={Activity}
+          delay={60}
         />
         <StatCard
           label="Resolved"
@@ -188,28 +191,34 @@ export function AdminDashboard() {
               : "No reports yet"
           }
           icon={CheckCircle2}
+          delay={120}
         />
         <StatCard
           label="Members"
           value={stats.members}
           hint={`${stats.totalUsers} total accounts`}
           icon={Users}
+          delay={180}
         />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        {(Object.keys(REPORT_TYPE_META) as ReportType[]).map((type) => {
+        {(Object.keys(REPORT_TYPE_META) as ReportType[]).map((type, index) => {
           const meta = REPORT_TYPE_META[type];
           return (
             <div
               key={type}
-              className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm"
+              className="flex animate-fade-up items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm"
+              style={{ animationDelay: `${240 + index * 60}ms` }}
             >
               <span className="flex items-center gap-2 text-sm font-medium">
                 <span className={cn("size-2.5 rounded-full", meta.dotClass)} />
                 {meta.label}
               </span>
-              <span className="text-lg font-semibold tabular-nums">{stats.byType[type]}</span>
+              <CountUp
+                value={stats.byType[type]}
+                className="text-lg font-semibold tabular-nums"
+              />
             </div>
           );
         })}
@@ -333,21 +342,26 @@ function StatCard({
   value,
   hint,
   icon: Icon,
+  delay = 0,
 }: {
   label: string;
   value: number;
   hint: string;
   icon: React.ComponentType<{ className?: string }>;
+  delay?: number;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
+    <div
+      className="animate-fade-up rounded-xl border bg-card p-4 shadow-sm"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
         <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Icon className="size-3.5" />
         </span>
       </div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
+      <CountUp value={value} className="mt-2 block text-2xl font-semibold tabular-nums" />
       <p className="text-[11px] text-muted-foreground">{hint}</p>
     </div>
   );
